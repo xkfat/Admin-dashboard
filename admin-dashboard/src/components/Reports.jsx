@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import API from '../api'; // Adjust the import path according to your project structure
 
 export default function Reports() {
@@ -7,6 +8,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedReports, setSelectedReports] = useState([]);
+  const [searchParams] = useSearchParams(); // Add this to read URL parameters
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +30,15 @@ export default function Reports() {
     fetchReports();
   }, []);
 
-  // Apply filters whenever filter states change
+  // Handle URL parameters and apply initial filters
+  useEffect(() => {
+    const statusParam = searchParams.get('filter');
+    if (statusParam === 'unverified') {
+      setStatusFilter('unverified');
+    }
+  }, [searchParams]);
+
+  // Apply filters whenever filter states change or reports data changes
   useEffect(() => {
     applyFilters();
   }, [reports, searchTerm, statusFilter, reporterFilter, dateStart]);
@@ -94,6 +104,14 @@ export default function Reports() {
     }
 
     setFilteredReports(filtered);
+  };
+
+  // Add a function to clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('');
+    setReporterFilter('');
+    setDateStart('');
   };
 
   const handleSelectAll = () => {
@@ -218,6 +236,28 @@ export default function Reports() {
   return (
     <div className="p-6">
       <div className="space-y-6">
+        {/* Header - Show current filter status */}
+        {statusFilter && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-blue-900">
+                  Showing {statusFilter} reports
+                </h3>
+                <p className="text-blue-700">
+                  Displaying {filteredReports.length} of {stats.total} total reports
+                </p>
+              </div>
+              <button
+                onClick={clearAllFilters}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                Show All Reports
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Search and Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="mb-4">
@@ -230,7 +270,7 @@ export default function Reports() {
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <select
               className="p-3 border rounded-lg"
               value={statusFilter}
@@ -258,6 +298,7 @@ export default function Reports() {
               className="p-3 border rounded-lg"
               value={dateStart}
               onChange={(e) => setDateStart(e.target.value)}
+              placeholder="From date"
             />
             
             <button
@@ -265,6 +306,13 @@ export default function Reports() {
               onClick={applyFilters}
             >
               Apply Filters
+            </button>
+
+            <button
+              className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400"
+              onClick={clearAllFilters}
+            >
+              Clear All
             </button>
           </div>
         </div>
@@ -382,7 +430,10 @@ export default function Reports() {
 
           {filteredReports.length === 0 && (
             <div className="p-8 text-center text-gray-500">
-              No reports found matching your criteria.
+              {statusFilter ? 
+                `No ${statusFilter} reports found.` : 
+                'No reports found matching your criteria.'
+              }
             </div>
           )}
         </div>

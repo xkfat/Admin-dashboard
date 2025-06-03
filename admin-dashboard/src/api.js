@@ -81,6 +81,33 @@ export const API = {
   },
 
   // ========================
+  // DASHBOARD APIs (NEW)
+  // ========================
+  dashboard: {
+    // Get recent activity for dashboard
+    fetchRecentActivity: async () => {
+      try {
+        const data = await makeRequest('/api/cases/dashboard/activity/');
+        return data;
+      } catch (error) {
+        console.error('Error fetching dashboard activity:', error);
+        throw error;
+      }
+    },
+
+    // Get comprehensive dashboard statistics
+    fetchDashboardStats: async () => {
+      try {
+        const data = await makeRequest('/api/cases/dashboard/stats/');
+        return data;
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        throw error;
+      }
+    }
+  },
+
+  // ========================
   // USER MANAGEMENT APIs
   // ========================
   users: {
