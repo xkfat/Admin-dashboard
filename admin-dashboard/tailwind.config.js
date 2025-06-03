@@ -17,6 +17,9 @@ export default {
           bg: '#3D8D7F',  
           light: '#D8EBD3', 
           button: '#1C4B43', 
+          teal:'#3D8D7F',  
+          darkGreen:  '#1C4B43', 
+
         }
       }
     },

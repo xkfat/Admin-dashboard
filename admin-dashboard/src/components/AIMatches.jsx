@@ -231,7 +231,7 @@ export default function AIMatches() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="">All Statuses</option>
+                <option value=""> Status</option>
                 <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="rejected">Rejected</option>

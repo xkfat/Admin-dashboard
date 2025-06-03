@@ -8,10 +8,14 @@ import Cases from './components/Cases';
 import Reports from './components/Reports';
 import AddCase from './components/AddCase';
 import Notification from './components/Notifications';
-
+import CaseDetail from './components/CaseDetail';
 import Map from './components/Map';
 
 import AIMatches from './components/AIMatches';
+
+
+
+
 
 
 function App() {
@@ -31,8 +35,16 @@ function App() {
   };
 
   const handleLogout = () => {
+    // Clear all stored authentication data
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
+    localStorage.removeItem('user');
+    
+    // Update state to redirect to login
     setIsLoggedIn(false);
+    
+    // Optional: Show a logout success message
+    console.log('Successfully logged out');
   };
 
   if (loading) {
@@ -48,25 +60,23 @@ function App() {
 
   return (
     <div className="App">
-       <Router>
+      <Router>
         {!isLoggedIn ? (
           <Login onLoginSuccess={handleLoginSuccess} />
         ) : (
           <Routes>
-            <Route path="/" element={<Dashboard onLogout={handleLogout} />} >
+            <Route path="/" element={<Dashboard onLogout={handleLogout} />}>
               <Route index element={<Home />} />
-            <Route path='home' element={<Home/>}/>
-            <Route path='cases' element={<Cases/>}/>
+              <Route path='home' element={<Home />} />
+              <Route path='cases' element={<Cases />} />
+          <Route path='/cases/:id' element={<CaseDetail/>}/>
 
-                        <Route path='reports' element={<Reports/>}/>
-                        <Route path='/add-case' element={<AddCase/>}/>
-                        <Route path='/notifications' element={<Notification/>}/>
-                        <Route path='/AIMatches' element={<AIMatches/>}/>
-                        <Route path='/Map' element={<Map/>}/>
-
+              <Route path='reports' element={<Reports />} />
+              <Route path='/add-case' element={<AddCase />} />
+              <Route path='/notifications' element={<Notification />} />
+              <Route path='/AIMatches' element={<AIMatches />} />
+              <Route path='/map' element={<Map />} />
             </Route>
-
-            
           </Routes>
         )}
       </Router>
@@ -75,3 +85,4 @@ function App() {
 }
 
 export default App;
+

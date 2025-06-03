@@ -28,6 +28,31 @@ const makeRequest = async (endpoint, options = {}) => {
     throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
   }
   
+  // Check if response has content before trying to parse JSON
+  const contentType = response.headers.get('content-type');
+  const contentLength = response.headers.get('content-length');
+  
+  // If it's a 204 No Content or empty response, return null
+  if (response.status === 204 || contentLength === '0') {
+    console.log('Empty response (204 No Content or empty body)');
+    return null;
+  }
+  
+  // If there's no content-type or it's not JSON, try to get text
+  if (!contentType || !contentType.includes('application/json')) {
+    const text = await response.text();
+    if (!text) {
+      return null;
+    }
+    // Try to parse as JSON, fallback to returning the text
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+  
+  // Normal JSON parsing
   const data = await response.json();
   console.log('Response data:', data);
   return data;
@@ -57,6 +82,30 @@ const makeFileRequest = async (endpoint, formData, options = {}) => {
     const errorText = await response.text();
     console.error('API Error:', errorText);
     throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+  }
+  
+  // Check if response has content before trying to parse JSON
+  const contentType = response.headers.get('content-type');
+  const contentLength = response.headers.get('content-length');
+  
+  // If it's a 204 No Content or empty response, return null
+  if (response.status === 204 || contentLength === '0') {
+    console.log('Empty response (204 No Content or empty body)');
+    return null;
+  }
+  
+  // If there's no content-type or it's not JSON, try to get text
+  if (!contentType || !contentType.includes('application/json')) {
+    const text = await response.text();
+    if (!text) {
+      return null;
+    }
+    // Try to parse as JSON, fallback to returning the text
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
   
   const data = await response.json();
@@ -321,6 +370,26 @@ export const API = {
       }
     },
 
+    // NEW: Fetch cases that can receive updates (have reporters)
+    fetchCasesForUpdates: async (filters = {}) => {
+      try {
+        const queryParams = new URLSearchParams();
+        
+        // Add search filter if provided
+        if (filters.search) queryParams.append('search', filters.search);
+        
+        const endpoint = queryParams.toString() 
+          ? `/api/cases/for-updates/?${queryParams}` 
+          : '/api/cases/for-updates/';
+
+        const data = await makeRequest(endpoint);
+        return data;
+      } catch (error) {
+        console.error('Error fetching cases for updates:', error);
+        throw error;
+      }
+    },
+
     // Create a new case
     create: async (caseData) => {
       try {
@@ -416,10 +485,11 @@ export const API = {
     // Delete a case
     delete: async (caseId) => {
       try {
-        await makeRequest(`/api/cases/${caseId}/`, {
+        const result = await makeRequest(`/api/cases/${caseId}/`, {
           method: 'DELETE'
         });
-        return true;
+        console.log(`Case ${caseId} deleted successfully`);
+        return true; // Return true to indicate success
       } catch (error) {
         console.error(`Error deleting case ${caseId}:`, error);
         throw error;
@@ -435,7 +505,32 @@ export const API = {
         console.error('Error fetching cases stats:', error);
         throw error;
       }
-    }
+    },
+
+    // Add case update
+    addCaseUpdate: async (caseId, updateData) => {
+      try {
+        const data = await makeRequest(`/api/cases/${caseId}/add-update/`, {
+          method: 'POST',
+          body: updateData
+        });
+        return data;
+      } catch (error) {
+        console.error(`Error adding case update for case ${caseId}:`, error);
+        throw error;
+      }
+    },
+
+    // Get case updates
+    getCaseUpdates: async (caseId) => {
+      try {
+        const data = await makeRequest(`/api/cases/${caseId}/updates/`);
+        return data;
+      } catch (error) {
+        console.error(`Error fetching case updates for case ${caseId}:`, error);
+        throw error;
+      }
+    },
   },
 
   reports: {

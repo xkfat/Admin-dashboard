@@ -11,8 +11,8 @@ const SuccessDialog = ({ isOpen, onClose, title, message, type = 'success' }) =>
       <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl transform transition-all">
         <div className="flex items-center justify-center mb-4">
           {type === 'success' ? (
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="w-16 h-16 bg-findthem-light rounded-full flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-findthem-darkGreen" />
             </div>
           ) : (
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
@@ -29,7 +29,7 @@ const SuccessDialog = ({ isOpen, onClose, title, message, type = 'success' }) =>
             onClick={onClose}
             className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
               type === 'success'
-                ? 'bg-green-600 hover:bg-green-700 text-white'
+                ? 'bg-findthem-darkGreen hover:bg-findthem-teal text-white'
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
           >
@@ -212,7 +212,6 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
 
   const getRecipientCount = () => {
     if (recipients === 'all') return 'All Users';
-    if (recipients === 'staff') return 'Staff Only';
     return `${selectedUsers.length} Selected`;
   };
 
@@ -243,7 +242,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal resize-none"
                 rows="4"
                 placeholder="Enter notification message..."
                 required
@@ -259,7 +258,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
                 type="text"
                 value={pushTitle}
                 onChange={(e) => setPushTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
                 placeholder="FindThem"
               />
             </div>
@@ -272,7 +271,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
               <select
                 value={notificationType}
                 onChange={(e) => setNotificationType(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
               >
                 <option value="system">System Notification</option>
                 <option value="missing_person">Missing Person</option>
@@ -292,11 +291,10 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
               <select
                 value={recipients}
                 onChange={(e) => setRecipients(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
               >
                 <option value="all">All Users</option>
                 <option value="specific">Specific Users</option>
-                <option value="staff">Staff Only</option>
               </select>
             </div>
 
@@ -317,7 +315,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
                     placeholder="Search users..."
                   />
                 </div>
@@ -326,7 +324,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
                 <div className="flex justify-between items-center mb-3">
                   <button
                     onClick={handleSelectAll}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="text-findthem-teal hover:text-findthem-darkGreen text-sm font-medium"
                   >
                     {selectedUsers.length === filteredUsers.length ? 'Deselect All' : 'Select All'}
                   </button>
@@ -349,13 +347,13 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
                     filteredUsers.map((user) => (
                       <div
                         key={user.id}
-                        className="flex items-center p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="flex items-center p-3 hover:bg-findthem-light border-b border-gray-100 last:border-b-0"
                       >
                         <input
                           type="checkbox"
                           checked={selectedUsers.find(u => u.id === user.id) !== undefined}
                           onChange={() => handleUserToggle(user)}
-                          className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="mr-3 h-4 w-4 text-findthem-teal focus:ring-findthem-teal border-gray-300 rounded"
                         />
                         <div className="flex items-center flex-1">
                           <div className="flex-shrink-0 mr-3">
@@ -388,7 +386,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
                                   : user.username}
                               </p>
                               {user.role === 'admin' && (
-                                <Shield className="h-3 w-3 text-blue-500 ml-1" />
+                                <Shield className="h-3 w-3 text-findthem-teal ml-1" />
                               )}
                             </div>
                             <p className="text-xs text-gray-500 truncate">
@@ -419,7 +417,7 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
               <button
                 onClick={handleSend}
                 disabled={loading || !message.trim()}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                className="px-6 py-2 bg-findthem-darkGreen text-white rounded-lg hover:bg-findthem-teal disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
               >
                 {loading ? (
                   <>

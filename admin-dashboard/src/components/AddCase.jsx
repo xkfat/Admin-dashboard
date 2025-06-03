@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { CircleArrowLeft} from 'lucide-react';
-
+import { CircleArrowLeft, Search, MapPin } from 'lucide-react';
 import API from '../api';
 
 // Google Maps Location Picker Modal Component
@@ -11,12 +9,11 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
   const [marker, setMarker] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
+  const [searchValue, setSearchValue] = useState('');
   const [selectedLocation, setSelectedLocation] = useState(
-    initialLocation || { lat: 40.7128, lng: -74.0060 } // Default to NYC
+    initialLocation || { lat: 18.0735, lng: -15.9582 } // Nouakchott coordinates
   );
-
-  // Your Google Maps API Key
-  const GOOGLE_MAPS_API_KEY = 'AIzaSyC_EsZPIvrGW3TcBuiDhybiltDIokgGEPY';
 
   // Load Google Maps script when modal opens
   useEffect(() => {
@@ -132,11 +129,77 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
       setMap(mapInstance);
       setMarker(markerInstance);
       setMapError(null);
+      
+      // Initialize autocomplete for search
+      initializeAutocomplete(mapInstance, markerInstance);
+      
       console.log('Map initialized successfully');
 
     } catch (error) {
       console.error('Error initializing map:', error);
       setMapError('Failed to initialize map. Please try again.');
+    }
+  };
+
+  // Initialize Google Places Autocomplete
+  const initializeAutocomplete = (mapInstance, markerInstance) => {
+    try {
+      const searchInput = document.getElementById('map-search-input');
+      if (!searchInput || !window.google?.maps?.places) {
+        console.log('Search input or Places API not available');
+        return;
+      }
+
+      const autocompleteInstance = new window.google.maps.places.Autocomplete(searchInput, {
+        types: ['establishment', 'geocode'],
+        componentRestrictions: { country: 'MR' }, // Restrict to Mauritania
+        fields: ['place_id', 'geometry', 'name', 'formatted_address']
+      });
+
+      // Bind autocomplete to map
+      autocompleteInstance.bindTo('bounds', mapInstance);
+
+      // Listen for place selection
+      autocompleteInstance.addListener('place_changed', () => {
+        const place = autocompleteInstance.getPlace();
+        
+        if (!place.geometry || !place.geometry.location) {
+          console.log('No geometry found for this place');
+          return;
+        }
+
+        const newPosition = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        };
+
+        // Update map and marker
+        mapInstance.setCenter(newPosition);
+        mapInstance.setZoom(15); // Zoom in for better view
+        markerInstance.setPosition(newPosition);
+        setSelectedLocation(newPosition);
+
+        console.log('Place selected:', place.name, newPosition);
+      });
+
+      setAutocomplete(autocompleteInstance);
+
+    } catch (error) {
+      console.error('Error initializing autocomplete:', error);
+    }
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchValue(e.target.value);
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchValue('');
+    const searchInput = document.getElementById('map-search-input');
+    if (searchInput) {
+      searchInput.value = '';
     }
   };
 
@@ -159,6 +222,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
           setSelectedLocation(currentPos);
           if (map && marker) {
             map.setCenter(currentPos);
+            map.setZoom(15);
             marker.setPosition(currentPos);
           }
           console.log('Current location:', currentPos);
@@ -174,18 +238,29 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
     }
   };
 
+  // Center map on Nouakchott
+  const centerOnNouakchott = () => {
+    const nouakchottCenter = { lat: 18.0735, lng: -15.9582 };
+    setSelectedLocation(nouakchottCenter);
+    if (map && marker) {
+      map.setCenter(nouakchottCenter);
+      map.setZoom(13);
+      marker.setPosition(nouakchottCenter);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b bg-gray-50">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-xl font-semibold text-gray-900">Choose Location on Map</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Click on the map or drag the marker to select the last seen location
+                Search for a place, click on the map, or drag the marker to select the last seen location
               </p>
             </div>
             <button
@@ -196,6 +271,32 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
+          </div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="p-4 bg-white border-b">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              id="map-search-input"
+              type="text"
+              placeholder="Search for places in Mauritania (e.g., Nouakchott Central Market, Tevragh Zeina...)"
+              className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={searchValue}
+              onChange={handleSearchChange}
+              disabled={!mapLoaded}
+            />
+            {searchValue && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
         
@@ -248,49 +349,33 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
           </div>
           
           {/* Location Info and Controls */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm">
-                <strong className="text-gray-700">Selected Coordinates:</strong>
-                <div className="mt-2 space-y-1 font-mono text-xs">
-                  <div>Lat: {selectedLocation.lat.toFixed(6)}</div>
-                  <div>Lng: {selectedLocation.lng.toFixed(6)}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <button
-                onClick={handleCurrentLocation}
-                disabled={!mapLoaded}
-                className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                Use Current Location
-              </button>
-            </div>
+          <div className="mt-4 flex justify-end space-x-3">
+            <button
+              onClick={handleCurrentLocation}
+              disabled={!mapLoaded}
+              className="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Current Location
+            </button>
+
+            <button
+              onClick={handleConfirm}
+              disabled={!mapLoaded || mapError}
+              className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Confirm Location
+            </button>
           </div>
         </div>
         
-        {/* Footer */}
-        <div className="p-6 border-t bg-gray-50 flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!mapLoaded || mapError}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Confirm Location
-          </button>
-        </div>
+      
       </div>
     </div>
   );
@@ -454,20 +539,18 @@ export default function AddCase() {
   return (
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
-  <div className="flex items-center justify-between mb-6">
-    <button
-      onClick={() => navigate(-1)}
-      className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-    >
-      <CircleArrowLeft />
-    </button>
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 bg-findthem-button text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            <CircleArrowLeft />
+          </button>
 
-    <h2 className="text-2xl font-bold text-gray-900 text-center flex-1">
-      Add New Missing Person Case
-    </h2>
-  </div>
-
-
+          <h2 className="text-2xl font-bold text-gray-900 text-center flex-1">
+            Add New Missing Person Case
+          </h2>
+        </div>
 
         {/* Success Message */}
         {success && (
@@ -591,7 +674,7 @@ export default function AddCase() {
                 value={formData.contact_phone}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., +1234567890"
+                placeholder="e.g., +222 12345678"
                 disabled={loading}
               />
             </div>
@@ -624,7 +707,7 @@ export default function AddCase() {
                 value={formData.last_seen_location}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Central Park, New York"
+                placeholder="e.g., Nouakchott Central Market, Tevragh Zeina"
                 required
                 disabled={loading}
               />
@@ -662,7 +745,7 @@ export default function AddCase() {
                     console.log('Opening map modal');
                     setShowMapModal(true);
                   }}
-                  className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="bg-findthem-bg text-white p-3 rounded-lg hover:bg-findthem-button transition-colors flex items-center justify-center"
                   disabled={loading}
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -699,14 +782,7 @@ export default function AddCase() {
 
             {/* Submit Buttons */}
             <div className="md:col-span-2">
-              <div className="flex space-x-4">
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                >
-                  {loading ? 'Submitting...' : 'Submit Case'}
-                </button>
+              <div className="flex justify-end space-x-4">
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
@@ -714,6 +790,13 @@ export default function AddCase() {
                   disabled={loading}
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-findthem-bg text-white px-6 py-3 rounded-lg hover:bg-findthem-button transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? 'Submitting...' : 'Submit Case'}
                 </button>
               </div>
             </div>

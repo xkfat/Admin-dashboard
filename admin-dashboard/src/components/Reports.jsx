@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import API from '../api'; // Adjust the import path according to your project structure
 
 export default function Reports() {
@@ -9,12 +9,22 @@ export default function Reports() {
   const [error, setError] = useState(null);
   const [selectedReports, setSelectedReports] = useState([]);
   const [searchParams] = useSearchParams(); // Add this to read URL parameters
+  const navigate = useNavigate(); // Add navigation hook
+  const [casesCache, setCasesCache] = useState({}); // Cache for case details
+  
+  // Dialog state for no reports message
+  const [showNoReportsDialog, setShowNoReportsDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState('');
+  
+  // Dialog state for viewing full note
+  const [showNoteDialog, setShowNoteDialog] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [reporterFilter, setReporterFilter] = useState('');
   const [dateStart, setDateStart] = useState('');
+  const [caseFilter, setCaseFilter] = useState(''); // NEW: Case ID filter
 
   // Statistics
   const [stats, setStats] = useState({
@@ -32,23 +42,72 @@ export default function Reports() {
 
   // Handle URL parameters and apply initial filters
   useEffect(() => {
-    const statusParam = searchParams.get('filter');
+    const statusParam = searchParams.get('status');
+    const caseIdParam = searchParams.get('case_id'); // NEW: Read case_id parameter
+    
     if (statusParam === 'unverified') {
       setStatusFilter('unverified');
+    }
+    
+    // NEW: Set case filter if case_id is in URL
+    if (caseIdParam) {
+      setCaseFilter(caseIdParam);
     }
   }, [searchParams]);
 
   // Apply filters whenever filter states change or reports data changes
   useEffect(() => {
     applyFilters();
-  }, [reports, searchTerm, statusFilter, reporterFilter, dateStart]);
+  }, [reports, searchTerm, statusFilter, dateStart, caseFilter]); // Removed reporterFilter
+
+  // Check for empty case filter results and show dialog
+  useEffect(() => {
+    if (caseFilter && reports.length > 0) {
+      const caseReports = reports.filter(report => 
+        report.missing_person?.toString() === caseFilter.toString()
+      );
+      
+      if (caseReports.length === 0) {
+        setDialogMessage(`There are no reports for Case #${caseFilter}`);
+        setShowNoReportsDialog(true);
+        // Clear the case filter to prevent the blue box from showing
+        setCaseFilter('');
+      }
+    }
+  }, [reports, caseFilter]);
 
   const fetchReports = async () => {
     try {
       setLoading(true);
       const data = await API.reports.fetchAll();
-      setReports(data);
-      calculateStats(data);
+      
+      // Fetch case details for each unique case ID
+      const uniqueCaseIds = [...new Set(data.map(report => report.missing_person))];
+      const casePromises = uniqueCaseIds.map(async (caseId) => {
+        try {
+          const caseData = await API.cases.getById(caseId);
+          return { id: caseId, data: caseData };
+        } catch (err) {
+          console.error(`Error fetching case ${caseId}:`, err);
+          return { id: caseId, data: null };
+        }
+      });
+      
+      const caseResults = await Promise.all(casePromises);
+      const newCasesCache = {};
+      caseResults.forEach(result => {
+        newCasesCache[result.id] = result.data;
+      });
+      setCasesCache(newCasesCache);
+      
+      // Add missing person names to reports
+      const reportsWithNames = data.map(report => ({
+        ...report,
+        missing_person_name: newCasesCache[report.missing_person]?.full_name || null
+      }));
+      
+      setReports(reportsWithNames);
+      calculateStats(reportsWithNames);
     } catch (err) {
       setError('Failed to fetch reports');
       console.error('Error fetching reports:', err);
@@ -75,6 +134,7 @@ export default function Reports() {
     if (searchTerm) {
       filtered = filtered.filter(report =>
         report.reporter?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.missing_person_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.missing_person?.toString().includes(searchTerm.toLowerCase()) ||
         report.note?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -83,15 +143,6 @@ export default function Reports() {
     // Status filter
     if (statusFilter) {
       filtered = filtered.filter(report => report.report_status === statusFilter);
-    }
-
-    // Reporter type filter
-    if (reporterFilter) {
-      if (reporterFilter === 'authenticated') {
-        filtered = filtered.filter(report => report.reporter && report.reporter !== 'Anonymous');
-      } else if (reporterFilter === 'anonymous') {
-        filtered = filtered.filter(report => !report.reporter || report.reporter === 'Anonymous');
-      }
     }
 
     // Date filter
@@ -103,6 +154,13 @@ export default function Reports() {
       });
     }
 
+    // NEW: Case filter - Filter by specific case ID
+    if (caseFilter) {
+      filtered = filtered.filter(report => 
+        report.missing_person?.toString() === caseFilter.toString()
+      );
+    }
+
     setFilteredReports(filtered);
   };
 
@@ -110,8 +168,8 @@ export default function Reports() {
   const clearAllFilters = () => {
     setSearchTerm('');
     setStatusFilter('');
-    setReporterFilter('');
     setDateStart('');
+    setCaseFilter(''); // NEW: Clear case filter
   };
 
   const handleSelectAll = () => {
@@ -183,6 +241,17 @@ export default function Reports() {
     }
   };
 
+  // Function to navigate to case details
+  const handleCaseClick = (caseId) => {
+    navigate(`/cases/${caseId}`);
+  };
+
+  // Function to open note dialog
+  const handleViewNote = (report) => {
+    setSelectedReport(report);
+    setShowNoteDialog(true);
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'new':
@@ -213,6 +282,77 @@ export default function Reports() {
     return note.length > maxLength ? `${note.substring(0, maxLength)}...` : note;
   };
 
+  // Dialog component for viewing full note
+  const NoteDialog = () => {
+    if (!showNoteDialog || !selectedReport) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Report Note
+            </h3>
+            <button
+              onClick={() => setShowNoteDialog(false)}
+              className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg border max-h-60 overflow-y-auto">
+            <p className="text-gray-900 whitespace-pre-wrap">
+              {selectedReport.note || 'No note provided'}
+            </p>
+          </div>
+          
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={() => setShowNoteDialog(false)}
+              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Dialog component for no reports message
+  const NoReportsDialog = () => {
+    if (!showNoReportsDialog) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+            No Reports Found
+          </h3>
+          <p className="text-gray-600 text-center mb-6">
+            {dialogMessage}
+          </p>
+          <button
+            onClick={() => setShowNoReportsDialog(false)}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading && reports.length === 0) {
     return (
       <div className="p-6">
@@ -236,27 +376,10 @@ export default function Reports() {
   return (
     <div className="p-6">
       <div className="space-y-6">
-        {/* Header - Show current filter status */}
-        {statusFilter && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium text-blue-900">
-                  Showing {statusFilter} reports
-                </h3>
-                <p className="text-blue-700">
-                  Displaying {filteredReports.length} of {stats.total} total reports
-                </p>
-              </div>
-              <button
-                onClick={clearAllFilters}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-              >
-                Show All Reports
-              </button>
-            </div>
-          </div>
-        )}
+        {/* REMOVED: Header filter status box */}
+        
+      
+       
 
         {/* Search and Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -276,22 +399,15 @@ export default function Reports() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All Statuses</option>
+              <option value="">Status</option>
               <option value="new">New</option>
               <option value="verified">Verified</option>
               <option value="false">False</option>
               <option value="unverified">Unverified</option>
             </select>
             
-            <select
-              className="p-3 border rounded-lg"
-              value={reporterFilter}
-              onChange={(e) => setReporterFilter(e.target.value)}
-            >
-              <option value="">All Types</option>
-              <option value="authenticated">Authenticated</option>
-              <option value="anonymous">Anonymous</option>
-            </select>
+            {/* NEW: Case ID filter input */}
+           
             
             <input
               type="date"
@@ -366,7 +482,9 @@ export default function Reports() {
           )}
 
           {/* Table */}
-          <div className="overflow-x-auto max-h-96">
+       
+
+                 <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
@@ -383,7 +501,7 @@ export default function Reports() {
                   <th className="p-4 text-left">Report Status</th>
                   <th className="p-4 text-left">Note Preview</th>
                   <th className="p-4 text-left">Date Submitted</th>
-                  <th className="p-4 text-left">Actions</th>
+                  <th className="p-4 text-left">View</th>
                 </tr>
               </thead>
               <tbody>
@@ -398,7 +516,14 @@ export default function Reports() {
                     </td>
                     <td className="p-4">{report.id}</td>
                     <td className="p-4">{report.reporter || 'Anonymous'}</td>
-                    <td className="p-4">Case #{report.missing_person}</td>
+                    <td className="p-4">
+                      <button
+                        onClick={() => handleCaseClick(report.missing_person)}
+                        className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+                      >
+                        {report.missing_person_name || `Case #${report.missing_person}`}
+                      </button>
+                    </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(report.report_status)}`}>
                         {report.report_status}
@@ -411,16 +536,12 @@ export default function Reports() {
                     </td>
                     <td className="p-4">{formatDate(report.date_submitted)}</td>
                     <td className="p-4">
-                      <select
-                        className="p-2 border rounded text-sm"
-                        value={report.report_status}
-                        onChange={(e) => handleSingleStatusChange(report.id, e.target.value)}
+                      <button
+                        onClick={() => handleViewNote(report)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
                       >
-                        <option value="new">New</option>
-                        <option value="verified">Verified</option>
-                        <option value="false">False</option>
-                        <option value="unverified">Unverified</option>
-                      </select>
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -428,7 +549,7 @@ export default function Reports() {
             </table>
           </div>
 
-          {filteredReports.length === 0 && (
+          {filteredReports.length === 0 && !showNoReportsDialog && (
             <div className="p-8 text-center text-gray-500">
               {statusFilter ? 
                 `No ${statusFilter} reports found.` : 
@@ -437,6 +558,12 @@ export default function Reports() {
             </div>
           )}
         </div>
+
+        {/* No Reports Dialog */}
+        <NoReportsDialog />
+
+        {/* Note Dialog */}
+        <NoteDialog />
       </div>
     </div>
   );
