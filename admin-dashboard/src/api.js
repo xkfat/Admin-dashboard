@@ -506,6 +506,29 @@ export const API = {
         throw error;
       }
     },
+     getStats: async (filters = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Add filters to the stats request (same as main cases endpoint)
+      if (filters.search) queryParams.append('name_or_location', filters.search);
+      if (filters.gender) queryParams.append('gender', filters.gender);
+      if (filters.status) queryParams.append('status', filters.status);
+      if (filters.submission_status) queryParams.append('submission_status', filters.submission_status);
+      if (filters.age_min) queryParams.append('age_min', filters.age_min);
+      if (filters.age_max) queryParams.append('age_max', filters.age_max);
+
+      const endpoint = queryParams.toString() 
+        ? `/api/cases/stats/?${queryParams}` 
+        : '/api/cases/stats/';
+
+      const data = await makeRequest(endpoint);
+      return data;
+    } catch (error) {
+      console.error('Error fetching cases stats:', error);
+      throw error;
+    }
+  },
 
     // Add case update
     addCaseUpdate: async (caseId, updateData) => {
