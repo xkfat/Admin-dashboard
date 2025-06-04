@@ -76,6 +76,8 @@ function App() {
               <Route path='/notifications' element={<Notification />} />
               <Route path='/AIMatches' element={<AIMatches />} />
               <Route path='/map' element={<Map />} />
+                <Route path='/Notification' element={<Notification />} />
+
             </Route>
           </Routes>
         )}

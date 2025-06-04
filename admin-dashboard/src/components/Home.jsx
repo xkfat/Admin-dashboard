@@ -409,7 +409,7 @@ export default function Home() {
               <p className="text-3xl font-bold text-gray-900">
                 {loading ? '...' : stats.pendingCases}
               </p>
-              <p className="text-xs text-gray-500 mt-1">In progress status</p>
+              <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
             </div>
             <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -429,7 +429,7 @@ export default function Home() {
                 {loading ? '...' : stats.aiMatches}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {stats.aiPendingReviews > 0 ? 'Pending review' : 'No pending matches'}
+                {stats.aiPendingReviews > 0 ? 'Awaiting review' : 'No pending matches'}
               </p>
             </div>
             <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

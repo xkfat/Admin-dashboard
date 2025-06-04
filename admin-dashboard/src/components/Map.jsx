@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import API from '../api'; // Adjust the import path as needed
+import { useNavigate } from 'react-router-dom';
+import API from '../api';
 
 export default function Map() {
+  const navigate = useNavigate();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const componentMountedRef = useRef(true);
   const mapInitializedRef = useRef(false);
+  const scriptLoadedRef = useRef(false);
   
   const [filters, setFilters] = useState({
     status: '',
@@ -28,17 +31,6 @@ export default function Map() {
   const [selectedCase, setSelectedCase] = useState(null);
   const [mapReady, setMapReady] = useState(false);
 
-  // Isolated map container that React won't touch
-  const MapContainer = React.memo(() => {
-    return (
-      <div
-        ref={mapContainerRef}
-        className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg bg-gray-100"
-        style={{ minHeight: '600px' }}
-      />
-    );
-  });
-
   // Get marker color based on case status
   const getMarkerColor = useCallback((status) => {
     switch (status) {
@@ -53,6 +45,149 @@ export default function Map() {
     }
   }, []);
 
+  // Create custom photo marker
+  const createPhotoMarker = useCallback((caseItem, position) => {
+    return new Promise((resolve) => {
+      // Create the main container
+      const markerContainer = document.createElement('div');
+      markerContainer.className = 'custom-photo-marker';
+      markerContainer.style.cssText = `
+        position: relative;
+        width: 60px;
+        height: 80px;
+        cursor: pointer;
+        transform: translate(-50%, -100%);
+        z-index: 1000;
+      `;
+
+      // Create the pin background (teardrop shape)
+      const pinBackground = document.createElement('div');
+      pinBackground.className = 'pin-background';
+      pinBackground.style.cssText = `
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        background: ${getMarkerColor(caseItem.status)};
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        top: 0;
+        left: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        border: 3px solid white;
+      `;
+
+      // Create the photo container
+      const photoContainer = document.createElement('div');
+      photoContainer.className = 'photo-container';
+      photoContainer.style.cssText = `
+        position: absolute;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        overflow: hidden;
+        top: 7px;
+        left: 7px;
+        transform: rotate(45deg);
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        z-index: 1001;
+      `;
+
+      // Create the photo image
+      const photoImg = document.createElement('img');
+      photoImg.src = caseItem.photo || '/default-avatar.png';
+      photoImg.alt = `${caseItem.first_name} ${caseItem.last_name}`;
+      photoImg.style.cssText = `
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: rotate(-45deg) scale(1.1);
+        display: block;
+      `;
+
+      // Handle image load error
+      photoImg.onerror = () => {
+        photoImg.src = '/default-avatar.png';
+      };
+
+      // Create status indicator dot
+      const statusDot = document.createElement('div');
+      statusDot.className = 'status-indicator';
+      statusDot.style.cssText = `
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: ${getMarkerColor(caseItem.status)};
+        border: 2px solid white;
+        border-radius: 50%;
+        top: -2px;
+        right: 2px;
+        transform: rotate(45deg);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        z-index: 1002;
+      `;
+
+      // Add pulse animation for missing cases
+      if (caseItem.status === 'missing') {
+        statusDot.style.animation = 'pulse 2s infinite';
+        
+        // Add CSS animation if not already added
+        if (!document.querySelector('#marker-animations')) {
+          const style = document.createElement('style');
+          style.id = 'marker-animations';
+          style.textContent = `
+            @keyframes pulse {
+              0% { transform: rotate(45deg) scale(1); opacity: 1; }
+              50% { transform: rotate(45deg) scale(1.3); opacity: 0.7; }
+              100% { transform: rotate(45deg) scale(1); opacity: 1; }
+            }
+            .custom-photo-marker:hover .pin-background {
+              transform: rotate(-45deg) scale(1.1);
+              transition: transform 0.2s ease;
+            }
+            .custom-photo-marker:hover .photo-container {
+              transform: rotate(45deg) scale(1.05);
+              transition: transform 0.2s ease;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+      }
+
+      // Assemble the marker
+      photoContainer.appendChild(photoImg);
+      markerContainer.appendChild(pinBackground);
+      markerContainer.appendChild(photoContainer);
+      markerContainer.appendChild(statusDot);
+
+      // Add click event to navigate to case detail
+      markerContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('🖱️ Photo marker clicked:', caseItem.first_name, caseItem.last_name);
+        
+        // Set selected case for info panel
+        setSelectedCase(caseItem);
+        
+        // Navigate to case detail
+        navigate(`/cases/${caseItem.id}`);
+      });
+
+      // Add hover effects
+      markerContainer.addEventListener('mouseenter', () => {
+        markerContainer.style.zIndex = '2000';
+        markerContainer.style.transform = 'translate(-50%, -100%) scale(1.1)';
+        markerContainer.style.transition = 'transform 0.2s ease';
+      });
+
+      markerContainer.addEventListener('mouseleave', () => {
+        markerContainer.style.zIndex = '1000';
+        markerContainer.style.transform = 'translate(-50%, -100%) scale(1)';
+      });
+
+      resolve(markerContainer);
+    });
+  }, [getMarkerColor, navigate, setSelectedCase]);
+
   // Safe cleanup function
   const cleanupMarkers = useCallback(() => {
     if (markersRef.current && markersRef.current.length > 0) {
@@ -66,44 +201,36 @@ export default function Map() {
             window.google.maps.event.removeListener(marker._clickListener);
           }
         } catch (e) {
-          // Silently handle cleanup errors
+          console.warn('Error cleaning up marker:', e);
         }
       });
     }
     markersRef.current = [];
   }, []);
 
-  // Add markers to map
-  const addMarkersToMap = useCallback((casesData) => {
-    console.log('🏷️ Starting to add markers to map...');
-    console.log('🔍 Pre-marker checks:', {
-      hasMapInstance: !!mapInstanceRef.current,
-      hasGoogleMaps: !!window.google?.maps,
-      componentMounted: componentMountedRef.current,
-      casesCount: casesData.length
-    });
-
+  // Add markers to map with custom photo design
+  const addMarkersToMap = useCallback(async (casesData) => {
+    console.log('🏷️ Starting to add custom photo markers to map...');
+    console.log('📊 Cases data:', casesData);
+    
     if (!mapInstanceRef.current || !window.google?.maps || !componentMountedRef.current) {
       console.log('❌ Cannot add markers - missing requirements');
       return;
     }
 
     // Clean up existing markers
-    console.log('🧹 Cleaning up existing markers...');
     cleanupMarkers();
 
     let markersCreated = 0;
     let markersSkipped = 0;
 
-    casesData.forEach((caseItem, index) => {
+    for (const caseItem of casesData) {
+      console.log(`🔍 Processing case: ${caseItem.first_name} ${caseItem.last_name}`);
+
       if (!caseItem.latitude || !caseItem.longitude || !componentMountedRef.current) {
-        console.log(`⚠️ Skipping case ${index + 1}: missing coordinates`, {
-          id: caseItem.id,
-          hasLat: !!caseItem.latitude,
-          hasLng: !!caseItem.longitude
-        });
+        console.log(`⚠️ Skipping case ${caseItem.id}: missing coordinates`);
         markersSkipped++;
-        return;
+        continue;
       }
 
       try {
@@ -112,73 +239,74 @@ export default function Map() {
           lng: parseFloat(caseItem.longitude) 
         };
 
-        console.log(`📍 Creating marker ${index + 1} for case:`, {
-          name: `${caseItem.first_name} ${caseItem.last_name}`,
-          status: caseItem.status,
-          position
-        });
+        console.log(`📍 Creating photo marker at:`, position);
 
+        // Create custom photo marker element
+        const markerElement = await createPhotoMarker(caseItem, position);
+
+        // Use AdvancedMarkerElement if available, otherwise fallback
         let marker;
-
-        // Try new AdvancedMarkerElement first
+        
         if (window.google.maps.marker?.AdvancedMarkerElement) {
-          console.log('🆕 Using AdvancedMarkerElement');
-          const pinElement = document.createElement('div');
-          pinElement.className = 'custom-marker';
-          pinElement.style.cssText = `
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: ${getMarkerColor(caseItem.status)};
-            border: 2px solid #ffffff;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          `;
-          pinElement.title = `${caseItem.first_name} ${caseItem.last_name}`;
-
+          console.log('🆕 Using AdvancedMarkerElement for photo marker');
           marker = new window.google.maps.marker.AdvancedMarkerElement({
             map: mapInstanceRef.current,
             position: position,
-            content: pinElement,
-            title: `${caseItem.first_name} ${caseItem.last_name}`
+            content: markerElement,
+            title: `${caseItem.first_name} ${caseItem.last_name} - ${caseItem.status}`,
+            zIndex: 1000
           });
-
-          // Add click event to the pin element
-          pinElement.addEventListener('click', () => {
-            console.log('🖱️ Marker clicked:', caseItem.first_name, caseItem.last_name);
-            if (componentMountedRef.current) {
-              setSelectedCase(caseItem);
-            }
-          });
-
         } else {
-          console.log('🔄 Falling back to regular Marker');
-          // Fallback to regular Marker
-          marker = new window.google.maps.Marker({
-            position: position,
-            map: mapInstanceRef.current,
-            title: `${caseItem.first_name} ${caseItem.last_name}`,
-            icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: getMarkerColor(caseItem.status),
-              fillOpacity: 0.8,
-              strokeColor: '#ffffff',
-              strokeWeight: 2
+          console.log('🔄 Using Overlay for photo marker (fallback)');
+          // Create custom overlay class for fallback
+          class PhotoMarkerOverlay extends window.google.maps.OverlayView {
+            constructor(position, content, map) {
+              super();
+              this.position = position;
+              this.content = content;
+              this.setMap(map);
             }
-          });
 
-          // Add click listener for regular markers
-          if (marker.addListener) {
-            const clickListener = marker.addListener('click', () => {
-              console.log('🖱️ Marker clicked:', caseItem.first_name, caseItem.last_name);
-              if (componentMountedRef.current) {
-                setSelectedCase(caseItem);
+            onAdd() {
+              this.div = document.createElement('div');
+              this.div.style.cssText = `
+                position: absolute;
+                pointer-events: auto;
+              `;
+              this.div.appendChild(this.content);
+
+              const panes = this.getPanes();
+              panes.overlayMouseTarget.appendChild(this.div);
+            }
+
+            draw() {
+              const overlayProjection = this.getProjection();
+              const point = overlayProjection.fromLatLngToDivPixel(
+                new window.google.maps.LatLng(this.position.lat, this.position.lng)
+              );
+
+              if (point) {
+                this.div.style.left = point.x + 'px';
+                this.div.style.top = point.y + 'px';
               }
-            });
-            marker._clickListener = clickListener;
+            }
+
+            onRemove() {
+              if (this.div) {
+                this.div.parentNode.removeChild(this.div);
+                this.div = null;
+              }
+            }
+
+            setMap(map) {
+              super.setMap(map);
+            }
           }
+
+          marker = new PhotoMarkerOverlay(position, markerElement, mapInstanceRef.current);
         }
+
+        console.log(`✅ Photo marker created for ${caseItem.first_name} ${caseItem.last_name}`);
 
         if (componentMountedRef.current && marker) {
           markersRef.current.push(marker);
@@ -186,42 +314,66 @@ export default function Map() {
         }
 
       } catch (error) {
-        console.error(`❌ Error creating marker for case ${caseItem.id}:`, error);
+        console.error(`❌ Error creating photo marker for case ${caseItem.id}:`, error);
         markersSkipped++;
       }
-    });
+    }
 
-    console.log(`✅ Marker creation completed:`, {
-      created: markersCreated,
-      skipped: markersSkipped,
-      total: casesData.length
-    });
-  }, [getMarkerColor, cleanupMarkers]);
+    console.log(`✅ Photo markers completed: ${markersCreated} created, ${markersSkipped} skipped`);
+    
+    // Fit all markers in view if we have any
+    if (markersCreated > 0 && mapInstanceRef.current) {
+      console.log('🎯 Fitting markers to view...');
+      const bounds = new window.google.maps.LatLngBounds();
+      casesData.forEach(caseItem => {
+        if (caseItem.latitude && caseItem.longitude) {
+          bounds.extend({
+            lat: parseFloat(caseItem.latitude),
+            lng: parseFloat(caseItem.longitude)
+          });
+        }
+      });
+      mapInstanceRef.current.fitBounds(bounds);
+      
+      // Don't zoom too close if there's only one marker
+      if (markersCreated === 1) {
+        setTimeout(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setZoom(Math.min(mapInstanceRef.current.getZoom(), 16));
+          }
+        }, 100);
+      }
+    }
+  }, [createPhotoMarker, cleanupMarkers]);
 
   // Load map data
   const loadMapData = useCallback(async () => {
-    console.log('📊 Starting to load map data...');
     if (!componentMountedRef.current) {
-      console.log('❌ Component not mounted, skipping data load');
       return;
     }
     
     try {
       setLoading(true);
       setError(null);
-      console.log('🔄 Making API call to fetch cases...', { filters });
+      console.log('🔄 Fetching cases data with filters:', filters);
       
       const casesData = await API.cases.fetchAll(1, filters);
       
       if (!componentMountedRef.current) {
-        console.log('❌ Component unmounted during API call, skipping data processing');
         return;
       }
       
       console.log('✅ Cases data received:', casesData);
       const casesArray = casesData.results || casesData || [];
-      console.log(`📈 Processing ${casesArray.length} cases`);
-      setCases(casesArray);
+      
+      // Filter cases that have coordinates
+      const casesWithCoordinates = casesArray.filter(caseItem => 
+        caseItem.latitude && caseItem.longitude
+      );
+      
+      console.log(`📊 Cases with coordinates: ${casesWithCoordinates.length}/${casesArray.length}`);
+      
+      setCases(casesWithCoordinates);
       
       // Calculate stats
       const totalCases = casesData.count || casesArray.length || 0;
@@ -234,65 +386,31 @@ export default function Map() {
         foundCases,
         recentReports: 23
       };
-      console.log('📊 Calculated stats:', newStats);
       setStats(newStats);
 
       // Add markers if map is ready
-      if (mapInstanceRef.current && mapReady) {
-        console.log('🗺️ Map is ready, adding markers...');
-        addMarkersToMap(casesArray);
+      if (mapInstanceRef.current) {
+        console.log('🗺️ Map ready, adding photo markers...');
+        await addMarkersToMap(casesWithCoordinates);
       } else {
-        console.log('⏳ Map not ready yet, skipping markers', {
-          hasMapInstance: !!mapInstanceRef.current,
-          mapReady
-        });
+        console.log('❌ No map instance available');
       }
       
     } catch (err) {
       console.error('❌ Error loading map data:', err);
-      console.log('🔍 API call failed, possible causes:');
-      console.log('  - API server is down');
-      console.log('  - Network connectivity issues');
-      console.log('  - Invalid API endpoint or parameters');
       if (componentMountedRef.current) {
         setError('Failed to load map data. Please try again.');
       }
     } finally {
       if (componentMountedRef.current) {
         setLoading(false);
-        console.log('✅ Map data loading completed');
       }
     }
-  }, [filters, addMarkersToMap, mapReady]);
+  }, [filters, addMarkersToMap]);
 
   // Initialize the map
   const initializeMap = useCallback(() => {
-    console.log('🗺️ Starting map initialization...');
-    console.log('🔍 Pre-flight checks:', {
-      componentMounted: componentMountedRef.current,
-      hasGoogle: !!window.google,
-      hasMaps: !!window.google?.maps,
-      hasMapContainer: !!mapContainerRef.current,
-      alreadyInitialized: mapInitializedRef.current
-    });
-
-    if (!componentMountedRef.current) {
-      console.log('❌ Component not mounted, aborting map initialization');
-      return;
-    }
-
-    if (!window.google?.maps) {
-      console.log('❌ Google Maps API not available, aborting initialization');
-      return;
-    }
-
-    if (!mapContainerRef.current) {
-      console.log('❌ Map container DOM element not found, aborting initialization');
-      return;
-    }
-
-    if (mapInitializedRef.current) {
-      console.log('ℹ️ Map already initialized, skipping');
+    if (!componentMountedRef.current || !window.google?.maps || !mapContainerRef.current || mapInitializedRef.current) {
       return;
     }
 
@@ -303,48 +421,45 @@ export default function Map() {
       const mapOptions = {
         center: { lat: 18.0735, lng: -15.9582 }, // Nouakchott coordinates
         zoom: 13,
-        styles: [
-          {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          }
-        ],
+        mapTypeId: 'roadmap',
+        mapId: import.meta.env.VITE_GOOGLE_MAPS_MAP_ID, // Add Map ID for Advanced Markers
         disableDefaultUI: false,
         zoomControl: true,
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
-        fullscreenControl: true
+        fullscreenControl: true,
+        gestureHandling: 'cooperative',
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          },
+          {
+            featureType: 'transit',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
       };
       
-      console.log('🌍 Map options:', mapOptions);
       const map = new window.google.maps.Map(mapContainerRef.current, mapOptions);
       mapInstanceRef.current = map;
       
-      console.log('✅ Google Map instance created successfully!', map);
+      console.log('✅ Google Map instance created successfully!');
       
+      // Set map ready and load data
       if (componentMountedRef.current) {
         setMapReady(true);
         setLoading(false);
-        console.log('🎯 Map ready state updated, loading data...');
-        
-        // Load data after a short delay
-        setTimeout(() => {
-          if (componentMountedRef.current) {
-            console.log('📊 Starting to load map data...');
-            loadMapData();
-          }
-        }, 100);
+        console.log('🎯 Map ready, loading data...');
+        loadMapData();
       }
       
     } catch (error) {
       console.error('❌ Error during map initialization:', error);
-      console.log('🔍 This could be caused by:');
-      console.log('  - Invalid map container element');
-      console.log('  - Google Maps API not fully loaded');
-      console.log('  - Browser compatibility issues');
       if (componentMountedRef.current) {
         setError('Failed to initialize map. Please refresh the page.');
         mapInitializedRef.current = false;
@@ -355,18 +470,16 @@ export default function Map() {
 
   // Load Google Maps script
   useEffect(() => {
-    let scriptElement = null;
+    componentMountedRef.current = true;
 
-    const loadGoogleMapsScript = async () => {
-      console.log('🚀 Starting Google Maps script loading process...');
-      if (!componentMountedRef.current) {
-        console.log('❌ Component not mounted, skipping script load');
+    const loadGoogleMapsScript = () => {
+      if (scriptLoadedRef.current) {
         return;
       }
 
-      // Check if Google Maps is already loaded in the browser
       if (window.google?.maps) {
-        console.log('✅ Google Maps already loaded in browser, initializing...');
+        console.log('✅ Google Maps already loaded, initializing...');
+        scriptLoadedRef.current = true;
         setTimeout(() => {
           if (componentMountedRef.current) {
             initializeMap();
@@ -375,13 +488,11 @@ export default function Map() {
         return;
       }
 
-      // Check if Google Maps script is already being loaded
       const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
       if (existingScript) {
-        console.log('📝 Google Maps script already exists in DOM, waiting for it to load...');
-        // Wait for existing script to load
+        console.log('📝 Google Maps script already exists, waiting for load...');
+        scriptLoadedRef.current = true;
         existingScript.addEventListener('load', () => {
-          console.log('✅ Existing Google Maps script finished loading');
           if (componentMountedRef.current) {
             setTimeout(initializeMap, 100);
           }
@@ -389,113 +500,65 @@ export default function Map() {
         return;
       }
 
-      try {
-        // Get the Google Maps API key from environment variables
-        // Make sure you have VITE_GOOGLE_MAPS_API_KEY in your .env file
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-        console.log('🔑 API Key check:', apiKey ? '✅ Found' : '❌ Missing');
-        
-        if (!apiKey) {
-          console.error('❌ Google Maps API key is missing from environment variables');
-          console.log('💡 Make sure you have VITE_GOOGLE_MAPS_API_KEY in your .env file');
-          if (componentMountedRef.current) {
-            setError('Google Maps API key is missing. Check your .env file for VITE_GOOGLE_MAPS_API_KEY');
-          }
-          return;
-        }
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      
+      if (!apiKey) {
+        console.error('❌ Google Maps API key missing');
+        setError('Google Maps API key is missing. Check your .env file for VITE_GOOGLE_MAPS_API_KEY');
+        setLoading(false);
+        return;
+      }
 
-        console.log('📝 Creating Google Maps script element...');
-        scriptElement = document.createElement('script');
-        scriptElement.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
-        scriptElement.async = true;
-        scriptElement.defer = true;
-        console.log('🌐 Script URL:', scriptElement.src.replace(apiKey, 'API_KEY_HIDDEN'));
+      console.log('📝 Creating Google Maps script...');
+      scriptLoadedRef.current = true;
+      
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
+      script.async = true;
+      script.defer = true;
 
-        scriptElement.onload = () => {
-          console.log('✅ Google Maps script loaded successfully!');
-          if (componentMountedRef.current) {
-            // Wait for Google Maps to be fully ready before initializing
-            let attempts = 0;
-            const checkReady = () => {
-              attempts++;
-              console.log(`🔍 Checking Google Maps readiness - Attempt ${attempts}/20`);
-              
-              if (window.google?.maps?.Map) {
-                console.log('🎉 Google Maps API is fully ready! Initializing map...');
-                initializeMap();
-              } else if (attempts < 20 && componentMountedRef.current) {
-                console.log('⏳ Google Maps not ready yet, retrying in 100ms...');
-                setTimeout(checkReady, 100);
-              } else if (componentMountedRef.current) {
-                console.error('❌ Google Maps failed to initialize after 20 attempts (2 seconds)');
-                setError('Google Maps failed to initialize properly after loading.');
-                setLoading(false);
-              }
-            };
-            setTimeout(checkReady, 100);
-          }
-        };
-
-        scriptElement.onerror = (error) => {
-          console.error('❌ Error loading Google Maps script:', error);
-          console.log('🔍 Possible causes:');
-          console.log('  - Invalid API key');
-          console.log('  - API key restrictions (check Google Cloud Console)');
-          console.log('  - Network connectivity issues');
-          console.log('  - Ad blocker blocking the script');
-          if (componentMountedRef.current) {
-            setError('Failed to load Google Maps. Check console for details.');
-            setLoading(false);
-          }
-        };
-
-        console.log('📎 Appending Google Maps script to document head...');
-        document.head.appendChild(scriptElement);
-
-      } catch (error) {
-        console.error('❌ Error in loadGoogleMapsScript:', error);
-        console.log('🔍 This error occurred while setting up the Google Maps script');
+      script.onload = () => {
+        console.log('✅ Google Maps script loaded successfully!');
         if (componentMountedRef.current) {
-          setError('Failed to setup Google Maps script loading.');
+          const checkReady = () => {
+            if (window.google?.maps?.Map) {
+              console.log('🎉 Google Maps API ready!');
+              initializeMap();
+            } else if (componentMountedRef.current) {
+              setTimeout(checkReady, 100);
+            }
+          };
+          setTimeout(checkReady, 100);
+        }
+      };
+
+      script.onerror = (error) => {
+        console.error('❌ Error loading Google Maps script:', error);
+        scriptLoadedRef.current = false;
+        if (componentMountedRef.current) {
+          setError('Failed to load Google Maps. Check console for details.');
           setLoading(false);
         }
-      }
+      };
+
+      document.head.appendChild(script);
     };
 
     loadGoogleMapsScript();
 
-    // Cleanup function
     return () => {
       componentMountedRef.current = false;
       cleanupMarkers();
       mapInitializedRef.current = false;
       mapInstanceRef.current = null;
-      
-      // Don't remove the script as it might be used by other components
-      // Just clean up our references
     };
   }, [initializeMap, cleanupMarkers]);
-
-  // Handle component mount/unmount
-  useEffect(() => {
-    componentMountedRef.current = true;
-    return () => {
-      componentMountedRef.current = false;
-    };
-  }, []);
 
   // Center map function
   const centerMap = useCallback(() => {
     if (mapInstanceRef.current && componentMountedRef.current) {
       mapInstanceRef.current.setCenter({ lat: 18.0735, lng: -15.9582 });
       mapInstanceRef.current.setZoom(13);
-    }
-  }, []);
-
-  // Toggle heatmap placeholder
-  const toggleHeatmap = useCallback(() => {
-    if (componentMountedRef.current) {
-      alert('Heatmap functionality would be implemented here');
     }
   }, []);
 
@@ -535,7 +598,7 @@ export default function Map() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Interactive Map View</h1>
-            <p className="text-gray-600 mt-1">Visualize missing person cases and reports on the map</p>
+            <p className="text-gray-600 mt-1">Visualize missing person cases with photo markers (Click to view case details)</p>
           </div>
           <div className="flex space-x-3">
             <button 
@@ -549,14 +612,14 @@ export default function Map() {
               Center Map
             </button>
             <button 
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={toggleHeatmap}
-              disabled={!mapReady || loading}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={loadMapData}
+              disabled={loading}
             >
               <svg className="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
               </svg>
-              Toggle Heatmap
+              Reload Markers
             </button>
           </div>
         </div>
@@ -584,53 +647,19 @@ export default function Map() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Map Container */}
         <div className="lg:col-span-3 relative">
-          {/* Isolated Map Container */}
-          <MapContainer />
+          <div
+            ref={mapContainerRef}
+            className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg bg-gray-100 border"
+            style={{ minHeight: '600px' }}
+          />
           
           {/* Loading Overlay */}
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-10 rounded-lg">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading map...</p>
+                <p className="mt-4 text-gray-600">Loading photo markers...</p>
               </div>
-            </div>
-          )}
-          
-          {/* Case Info Panel */}
-          {selectedCase && (
-            <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg max-w-sm z-20">
-              <div className="flex items-center space-x-3">
-                <img 
-                  src={selectedCase.photo || '/default-avatar.png'} 
-                  alt={`${selectedCase.first_name} ${selectedCase.last_name}`}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                  onError={(e) => { e.target.src = '/default-avatar.png'; }}
-                />
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedCase.first_name} {selectedCase.last_name}</h3>
-                  <p className="text-sm text-gray-600">Age: {selectedCase.age} • {selectedCase.gender}</p>
-                  <p className="text-sm">
-                    <strong>Status:</strong> 
-                    <span className={`ml-1 capitalize ${
-                      selectedCase.status === 'missing' ? 'text-red-600' :
-                      selectedCase.status === 'found' ? 'text-green-600' : 'text-yellow-600'
-                    }`}>
-                      {selectedCase.status.replace('_', ' ')}
-                    </span>
-                  </p>
-                  <p className="text-sm"><strong>Days Missing:</strong> {selectedCase.days_missing}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setSelectedCase(null)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                aria-label="Close case info"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
             </div>
           )}
         </div>
@@ -639,19 +668,31 @@ export default function Map() {
         <div className="space-y-6">
           {/* Map Legend */}
           <div className="bg-white p-4 rounded-lg border">
-            <h3 className="font-semibold text-gray-900 mb-3">Map Legend</h3>
-            <div className="space-y-2">
+            <h3 className="font-semibold text-gray-900 mb-3">Photo Markers Legend</h3>
+            <div className="space-y-3">
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                <div className="w-8 h-8 relative mr-3">
+                  <div className="w-8 h-8 bg-red-500 rounded-full border-2 border-white shadow-sm" style={{borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)'}}></div>
+                  <div className="absolute top-1 left-1 w-6 h-6 bg-gray-200 rounded-full border border-white" style={{transform: 'rotate(45deg)'}}></div>
+                </div>
                 <span className="text-sm">Missing Persons</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                <div className="w-8 h-8 relative mr-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-full border-2 border-white shadow-sm" style={{borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)'}}></div>
+                  <div className="absolute top-1 left-1 w-6 h-6 bg-gray-200 rounded-full border border-white" style={{transform: 'rotate(45deg)'}}></div>
+                </div>
                 <span className="text-sm">Found Persons</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                <div className="w-8 h-8 relative mr-3">
+                  <div className="w-8 h-8 bg-yellow-500 rounded-full border-2 border-white shadow-sm" style={{borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)'}}></div>
+                  <div className="absolute top-1 left-1 w-6 h-6 bg-gray-200 rounded-full border border-white" style={{transform: 'rotate(45deg)'}}></div>
+                </div>
                 <span className="text-sm">Under Investigation</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-50 rounded">
+                💡 <strong>Tip:</strong> Click photo markers to view case details
               </div>
             </div>
           </div>
@@ -665,6 +706,10 @@ export default function Map() {
                 <span className="font-semibold">{stats.totalCases}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-sm text-gray-600">On Map</span>
+                <span className="font-semibold text-blue-600">{cases.length}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Active Cases</span>
                 <span className="font-semibold text-red-600">{stats.activeCases}</span>
               </div>
@@ -672,82 +717,10 @@ export default function Map() {
                 <span className="text-sm text-gray-600">Found Cases</span>
                 <span className="font-semibold text-green-600">{stats.foundCases}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Recent Reports</span>
-                <span className="font-semibold text-blue-600">{stats.recentReports}</span>
-              </div>
             </div>
           </div>
 
-          {/* Map Filters */}
-          <div className="bg-white p-4 rounded-lg border">
-            <h3 className="font-semibold text-gray-900 mb-3">Filters</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Case Status</label>
-                <select 
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  disabled={loading}
-                >
-                  <option value="">All Status</option>
-                  <option value="missing">Missing</option>
-                  <option value="found">Found</option>
-                  <option value="under_investigation">Investigating</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
-                <select 
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                  value={filters.timeRange}
-                  onChange={(e) => handleFilterChange('timeRange', e.target.value)}
-                  disabled={loading}
-                >
-                  <option value="">All Time</option>
-                  <option value="24h">Last 24 Hours</option>
-                  <option value="7d">Last 7 Days</option>
-                  <option value="30d">Last 30 Days</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Age Range</label>
-                <div className="flex space-x-2">
-                  <input 
-                    type="number" 
-                    placeholder="Min" 
-                    className="w-1/2 p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    value={filters.ageMin}
-                    onChange={(e) => handleFilterChange('ageMin', e.target.value)}
-                    disabled={loading}
-                  />
-                  <input 
-                    type="number" 
-                    placeholder="Max" 
-                    className="w-1/2 p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    value={filters.ageMax}
-                    onChange={(e) => handleFilterChange('ageMax', e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <button 
-                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={applyMapFilters}
-                disabled={loading || !mapReady}
-              >
-                {loading ? 'Loading...' : 'Apply Filters'}
-              </button>
-              <button 
-                className="w-full bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={clearMapFilters}
-                disabled={loading}
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
+       
         </div>
       </div>
     </div>
