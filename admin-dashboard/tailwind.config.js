@@ -18,7 +18,10 @@ export default {
           light: '#D8EBD3', 
           button: '#1C4B43', 
           teal:'#3D8D7F',  
+          lightteal:   '#7AC9BCFF'    ,
           darkGreen:  '#1C4B43', 
+                    lightbg:   '#FFFFFFFF'    ,
+
 
         }
       }

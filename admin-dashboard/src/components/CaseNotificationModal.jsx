@@ -1,6 +1,6 @@
 // src/components/CaseNotificationModal.jsx
 import React, { useState } from 'react';
-import { X, Send, User, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import API from '../api';
 
 // Success Dialog Component (reusing the existing one but with findthem styling)
@@ -66,6 +66,7 @@ const CaseNotificationModal = ({ isOpen, onClose, caseData, onSend }) => {
   const [message, setMessage] = useState('');
   const [notificationType, setNotificationType] = useState('case_update');
   const [pushTitle, setPushTitle] = useState('Case Update - FindThem');
+  const [selectedTemplate, setSelectedTemplate] = useState('');
   const [loading, setLoading] = useState(false);
   
   // Success Dialog State
@@ -79,22 +80,38 @@ const CaseNotificationModal = ({ isOpen, onClose, caseData, onSend }) => {
   // Pre-defined message templates
   const messageTemplates = [
     {
+      value: 'status_update',
       label: 'Case Status Update',
       message: `Hi! We have an update regarding the missing person case for ${caseData?.full_name}. Please check the latest information in the app.`
     },
     {
+      value: 'investigation',
       label: 'Investigation Progress',
       message: `We're actively investigating the case of ${caseData?.full_name}. Our team is following up on new leads and will keep you informed.`
     },
     {
+      value: 'info_needed',
       label: 'Additional Information Needed',
       message: `We need some additional information to help with the search for ${caseData?.full_name}. Please contact us when convenient.`
     },
     {
+      value: 'resolution',
       label: 'Case Resolution',
       message: `Great news! We have positive developments in the case of ${caseData?.full_name}. Please check the app for details.`
     }
   ];
+
+  const handleTemplateChange = (templateValue) => {
+    setSelectedTemplate(templateValue);
+    if (templateValue) {
+      const template = messageTemplates.find(t => t.value === templateValue);
+      if (template) {
+        setMessage(template.message);
+      }
+    } else {
+      setMessage('');
+    }
+  };
 
   const handleSend = async () => {
     if (!message.trim()) {
@@ -162,15 +179,12 @@ const CaseNotificationModal = ({ isOpen, onClose, caseData, onSend }) => {
     setMessage('');
     setNotificationType('case_update');
     setPushTitle('Case Update - FindThem');
+    setSelectedTemplate('');
     onClose();
   };
 
   const closeSuccessDialog = () => {
     setSuccessDialog({ ...successDialog, isOpen: false });
-  };
-
-  const handleTemplateSelect = (template) => {
-    setMessage(template.message);
   };
 
   if (!isOpen) return null;
@@ -201,45 +215,23 @@ const CaseNotificationModal = ({ isOpen, onClose, caseData, onSend }) => {
           {/* Body */}
           <div className="p-6 space-y-6 max-h-[calc(90vh-250px)] overflow-y-auto">
             
-            {/* Case and Reporter Info */}
-            <div className="bg-findthem-light rounded-xl p-4 border border-findthem-button">
-              <div className="flex items-center gap-4">
-                <div className="bg-findthem-button rounded-full p-3">
-                  <User className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-findthem-bg">
-                    Case: {caseData?.full_name}
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    Reporter: {caseData?.reporter || 'Anonymous'}
-                  </p>
-                
-                </div>
-              </div>
-            </div>
-
-            {/* Message Templates */}
+            {/* Quick Templates Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Quick Templates (Click to use)
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quick Templates (Optional)
               </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {messageTemplates.map((template, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleTemplateSelect(template)}
-                    className="text-left p-3 border border-gray-200 rounded-lg hover:border-findthem-button hover:bg-findthem-light transition-colors"
-                  >
-                    <div className="font-medium text-sm text-findthem-bg">
-                      {template.label}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                      {template.message.substring(0, 80)}...
-                    </div>
-                  </button>
+              <select
+                value={selectedTemplate}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-findthem-button focus:border-findthem-button"
+              >
+                <option value="">Select a template or write your own message</option>
+                {messageTemplates.map((template) => (
+                  <option key={template.value} value={template.value}>
+                    {template.label}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
 
             {/* Message */}

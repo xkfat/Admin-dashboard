@@ -225,9 +225,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
           <div className="bg-gradient-to-r from-findthem-teal to-findthem-darkGreen text-white p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <MessageSquare className="h-4 w-4" />
-                </div>
+             
                 <h3 className="text-lg font-bold">Send Case Update</h3>
               </div>
               <button 
@@ -405,8 +403,8 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                         />
                         <FileText className="h-5 w-5 mr-2 text-findthem-teal" />
                         <div>
-                          <span className="text-sm font-medium text-gray-900">Template Message</span>
-                          <p className="text-xs text-gray-600">Use pre-written template</p>
+                          <span className="text-sm font-medium text-gray-900">Auto Messages</span>
+                          <p className="text-xs text-gray-600">Use pre-written messages</p>
                         </div>
                       </label>
                     </div>
@@ -416,7 +414,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                   {messageType === 'auto' && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-900 mb-2">
-                        Select Template
+                        Select Message
                       </label>
                       <select
                         value={autoUpdateType}
@@ -468,7 +466,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                         {updateMessage.length}/500 characters
                       </p>
                       {messageType === 'auto' && (
-                        <p className="text-xs text-findthem-teal font-medium">Using template message</p>
+                        <p className="text-xs text-findthem-teal font-medium">Using auto message</p>
                       )}
                     </div>
                   </div>

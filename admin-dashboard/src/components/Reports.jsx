@@ -1,6 +1,128 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { CheckCircle, AlertCircle, AlertTriangle, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import API from '../api'; // Adjust the import path according to your project structure
+
+// Reusable Dialog Component
+const CustomDialog = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  message, 
+  type = 'info', // success, error, warning, info, confirm
+  onConfirm = null, // For confirmation dialogs
+  confirmText = 'OK',
+  cancelText = 'Cancel',
+  showCancel = false
+}) => {
+  if (!isOpen) return null;
+
+  const getTypeConfig = () => {
+    switch (type) {
+      case 'success':
+        return {
+          icon: CheckCircle,
+          iconColor: 'text-green-600',
+          iconBg: 'bg-green-100',
+          borderColor: 'border-green-200',
+          buttonColor: 'bg-green-600 hover:bg-green-700'
+        };
+      case 'error':
+        return {
+          icon: AlertCircle,
+          iconColor: 'text-red-600',
+          iconBg: 'bg-red-100',
+          borderColor: 'border-red-200',
+          buttonColor: 'bg-red-600 hover:bg-red-700'
+        };
+      case 'warning':
+      case 'confirm':
+        return {
+          icon: AlertTriangle,
+          iconColor: 'text-yellow-600',
+          iconBg: 'bg-yellow-100',
+          borderColor: 'border-yellow-200',
+          buttonColor: 'bg-yellow-600 hover:bg-yellow-700'
+        };
+      default:
+        return {
+          icon: AlertCircle,
+          iconColor: 'text-findthem-teal',
+          iconBg: 'bg-findthem-light',
+          borderColor: 'border-findthem-teal',
+          buttonColor: 'bg-findthem-teal hover:bg-findthem-darkGreen'
+        };
+    }
+  };
+
+  const config = getTypeConfig();
+  const IconComponent = config.icon;
+
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+    } else {
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl transform transition-all animate-in zoom-in duration-200">
+        
+        {/* Header with Icon */}
+        <div className="bg-findthem-bg rounded-t-2xl p-6 text-center relative">
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          
+          {/* Icon */}
+          <div className={`w-16 h-16 ${config.iconBg} rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg`}>
+            <IconComponent className={`h-8 w-8 ${config.iconColor}`} />
+          </div>
+          
+          {/* Title */}
+          <h3 className="text-xl font-bold text-white mb-2">
+            {title}
+          </h3>
+        </div>
+        
+        {/* Content */}
+        <div className="p-6">
+          <p className="text-gray-700 text-center leading-relaxed mb-6">
+            {message}
+          </p>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-3 justify-center">
+            {showCancel && (
+              <button
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-400 transition-colors min-w-[100px]"
+              >
+                {cancelText}
+              </button>
+            )}
+            
+            <button
+              onClick={handleConfirm}
+              className={`px-6 py-3 ${config.buttonColor} text-white rounded-xl font-medium transition-colors min-w-[100px] shadow-lg`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </div>
+        
+        {/* Decorative bottom border */}
+        <div className="h-1 bg-gradient-to-r from-findthem-light via-findthem-button to-findthem-bg rounded-b-2xl"></div>
+      </div>
+    </div>
+  );
+};
 
 export default function Reports() {
   const [reports, setReports] = useState([]);
@@ -8,23 +130,39 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedReports, setSelectedReports] = useState([]);
-  const [searchParams] = useSearchParams(); // Add this to read URL parameters
-  const navigate = useNavigate(); // Add navigation hook
-  const [casesCache, setCasesCache] = useState({}); // Cache for case details
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [casesCache, setCasesCache] = useState({});
   
-  // Dialog state for no reports message
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reportsPerPage] = useState(5); // Fixed at 5 reports per page
+  
+  // Dialog states
   const [showNoReportsDialog, setShowNoReportsDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState('');
-  
-  // Dialog state for viewing full note
   const [showNoteDialog, setShowNoteDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   
+  // Custom dialog state for alerts
+  const [customDialog, setCustomDialog] = useState({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: null,
+    showCancel: false,
+    confirmText: 'OK',
+    cancelText: 'Cancel'
+  });
+  
   // Filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateStart, setDateStart] = useState('');
-  const [caseFilter, setCaseFilter] = useState(''); // NEW: Case ID filter
+  const [filters, setFilters] = useState({
+    search: '',
+    status: '',
+    dateStart: '',
+    caseFilter: ''
+  });
 
   // Statistics
   const [stats, setStats] = useState({
@@ -35,46 +173,135 @@ export default function Reports() {
     unverified: 0
   });
 
+  // Calculate pagination info
+  const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
+  const startIndex = (currentPage - 1) * reportsPerPage;
+  const endIndex = startIndex + reportsPerPage;
+  const currentReports = filteredReports.slice(startIndex, endIndex);
+
+  // Helper function to show custom dialog
+  const showCustomDialog = (type, title, message, onConfirm = null, showCancel = false, confirmText = 'OK', cancelText = 'Cancel') => {
+    setCustomDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      showCancel,
+      confirmText,
+      cancelText
+    });
+  };
+
+  const closeCustomDialog = () => {
+    setCustomDialog(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedReports([]); // Clear selections when page changes
+  }, [filteredReports.length]);
+
+  // Handle page changes
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      setSelectedReports([]); // Clear selections when page changes
+      // Scroll to top of reports table
+      document.getElementById('reports-table')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination
+      if (currentPage <= 3) {
+        // Show first 5 pages
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        if (totalPages > 5) {
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show last 5 pages
+        pages.push(1);
+        if (totalPages > 5) {
+          pages.push('...');
+        }
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show pages around current page
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
+  // Read URL parameters and set initial filters
+  useEffect(() => {
+    console.log('📖 Reading URL parameters for reports...');
+    const urlFilters = {
+      search: searchParams.get('search') || '',
+      status: searchParams.get('status') || '',
+      dateStart: searchParams.get('dateStart') || '',
+      caseFilter: searchParams.get('case_id') || ''
+    };
+
+    console.log('🔗 URL Filters found:', urlFilters);
+
+    const hasUrlFilters = Object.values(urlFilters).some(value => value !== '');
+    
+    if (hasUrlFilters) {
+      console.log('✅ Applying URL filters:', urlFilters);
+      setFilters(urlFilters);
+    }
+  }, [searchParams]);
+
   // Fetch reports on component mount
   useEffect(() => {
     fetchReports();
   }, []);
 
-  // Handle URL parameters and apply initial filters
-  useEffect(() => {
-    const statusParam = searchParams.get('status');
-    const caseIdParam = searchParams.get('case_id'); // NEW: Read case_id parameter
-    
-    if (statusParam === 'unverified') {
-      setStatusFilter('unverified');
-    }
-    
-    // NEW: Set case filter if case_id is in URL
-    if (caseIdParam) {
-      setCaseFilter(caseIdParam);
-    }
-  }, [searchParams]);
-
   // Apply filters whenever filter states change or reports data changes
   useEffect(() => {
     applyFilters();
-  }, [reports, searchTerm, statusFilter, dateStart, caseFilter]); // Removed reporterFilter
+  }, [reports, filters]);
 
   // Check for empty case filter results and show dialog
   useEffect(() => {
-    if (caseFilter && reports.length > 0) {
+    if (filters.caseFilter && reports.length > 0) {
       const caseReports = reports.filter(report => 
-        report.missing_person?.toString() === caseFilter.toString()
+        report.missing_person?.toString() === filters.caseFilter.toString()
       );
       
       if (caseReports.length === 0) {
-        setDialogMessage(`There are no reports for Case #${caseFilter}`);
+        setDialogMessage(`There are no reports for Case #${filters.caseFilter}`);
         setShowNoReportsDialog(true);
-        // Clear the case filter to prevent the blue box from showing
-        setCaseFilter('');
+        handleFilterChange('caseFilter', '');
       }
     }
-  }, [reports, caseFilter]);
+  }, [reports, filters.caseFilter]);
 
   const fetchReports = async () => {
     try {
@@ -127,56 +354,99 @@ export default function Reports() {
     setStats(stats);
   };
 
+  // Handle filter changes
+  const handleFilterChange = (key, value) => {
+    console.log(`Filter changed: ${key} = ${value}`);
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  // Handle stat card clicks to filter reports
+  const handleStatsCardClick = (statusFilter) => {
+    console.log(`📊 Stats card clicked for status: ${statusFilter}`);
+    
+    const newFilters = {
+      search: '',
+      status: statusFilter,
+      dateStart: '',
+      caseFilter: ''
+    };
+
+    setFilters(newFilters);
+    setSelectedReports([]);
+    
+    const newSearchParams = new URLSearchParams();
+    if (statusFilter) {
+      newSearchParams.set('status', statusFilter);
+    }
+    setSearchParams(newSearchParams);
+  };
+
   const applyFilters = () => {
     let filtered = [...reports];
 
-    // Search filter
-    if (searchTerm) {
+    if (filters.search) {
       filtered = filtered.filter(report =>
-        report.reporter?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.missing_person_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.missing_person?.toString().includes(searchTerm.toLowerCase()) ||
-        report.note?.toLowerCase().includes(searchTerm.toLowerCase())
+        report.reporter?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        report.missing_person_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        report.missing_person?.toString().includes(filters.search.toLowerCase()) ||
+        report.note?.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter(report => report.report_status === statusFilter);
+    if (filters.status) {
+      filtered = filtered.filter(report => report.report_status === filters.status);
     }
 
-    // Date filter
-    if (dateStart) {
+    if (filters.dateStart) {
       filtered = filtered.filter(report => {
         const reportDate = new Date(report.date_submitted);
-        const filterDate = new Date(dateStart);
+        const filterDate = new Date(filters.dateStart);
         return reportDate >= filterDate;
       });
     }
 
-    // NEW: Case filter - Filter by specific case ID
-    if (caseFilter) {
+    if (filters.caseFilter) {
       filtered = filtered.filter(report => 
-        report.missing_person?.toString() === caseFilter.toString()
+        report.missing_person?.toString() === filters.caseFilter.toString()
       );
     }
 
     setFilteredReports(filtered);
+    
+    const newSearchParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        if (key === 'caseFilter') {
+          newSearchParams.set('case_id', value);
+        } else {
+          newSearchParams.set(key, value);
+        }
+      }
+    });
+    setSearchParams(newSearchParams);
   };
 
-  // Add a function to clear all filters
+  // Clear all filters
   const clearAllFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('');
-    setDateStart('');
-    setCaseFilter(''); // NEW: Clear case filter
+    console.log('🧹 Clearing all filters');
+    const emptyFilters = {
+      search: '',
+      status: '',
+      dateStart: '',
+      caseFilter: ''
+    };
+    setFilters(emptyFilters);
+    setSearchParams(new URLSearchParams());
   };
 
   const handleSelectAll = () => {
-    if (selectedReports.length === filteredReports.length) {
+    if (selectedReports.length === currentReports.length) {
       setSelectedReports([]);
     } else {
-      setSelectedReports(filteredReports.map(report => report.id));
+      setSelectedReports(currentReports.map(report => report.id));
     }
   };
 
@@ -190,37 +460,66 @@ export default function Reports() {
     });
   };
 
+  // UPDATED: Replace alert with custom dialog
   const handleBulkStatusChange = async (newStatus) => {
     if (selectedReports.length === 0) {
-      alert('Please select reports to update');
+      showCustomDialog(
+        'warning',
+        'No Reports Selected',
+        'Please select reports to update before proceeding.'
+      );
       return;
     }
 
-    try {
-      setLoading(true);
-      await API.reports.bulkUpdateStatus(selectedReports, newStatus);
-      
-      // Update local state
-      const updatedReports = reports.map(report => {
-        if (selectedReports.includes(report.id)) {
-          return { ...report, report_status: newStatus };
+    // Show confirmation dialog instead of confirm()
+    showCustomDialog(
+      'confirm',
+      'Confirm Bulk Update',
+      `Are you sure you want to update ${selectedReports.length} selected reports to "${newStatus}" status?`,
+      async () => {
+        closeCustomDialog(); // Close confirmation dialog
+        
+        try {
+          setLoading(true);
+          await API.reports.bulkUpdateStatus(selectedReports, newStatus);
+          
+          // Update local state
+          const updatedReports = reports.map(report => {
+            if (selectedReports.includes(report.id)) {
+              return { ...report, report_status: newStatus };
+            }
+            return report;
+          });
+          
+          setReports(updatedReports);
+          calculateStats(updatedReports);
+          setSelectedReports([]);
+          
+          // Show success dialog instead of alert
+          showCustomDialog(
+            'success',
+            'Update Successful! 🎉',
+            `Successfully updated ${selectedReports.length} reports to "${newStatus}" status.`
+          );
+        } catch (err) {
+          console.error('Error updating reports:', err);
+          // Show error dialog instead of alert
+          showCustomDialog(
+            'error',
+            'Update Failed',
+            'Failed to update reports. Please check your connection and try again.'
+          );
+        } finally {
+          setLoading(false);
         }
-        return report;
-      });
-      
-      setReports(updatedReports);
-      calculateStats(updatedReports);
-      setSelectedReports([]);
-      
-      alert(`Successfully updated ${selectedReports.length} reports to ${newStatus}`);
-    } catch (err) {
-      console.error('Error updating reports:', err);
-      alert('Failed to update reports');
-    } finally {
-      setLoading(false);
-    }
+      },
+      true, // showCancel
+      'Update', // confirmText
+      'Cancel' // cancelText
+    );
   };
 
+  // UPDATED: Replace alert with custom dialog
   const handleSingleStatusChange = async (reportId, newStatus) => {
     try {
       await API.reports.updateStatus(reportId, newStatus);
@@ -235,9 +534,21 @@ export default function Reports() {
       
       setReports(updatedReports);
       calculateStats(updatedReports);
+      
+      // Show success dialog instead of alert
+      showCustomDialog(
+        'success',
+        'Status Updated! ✅',
+        `Report #${reportId} has been successfully updated to "${newStatus}" status.`
+      );
     } catch (err) {
       console.error('Error updating report:', err);
-      alert('Failed to update report');
+      // Show error dialog instead of alert
+      showCustomDialog(
+        'error',
+        'Update Failed',
+        `Failed to update report #${reportId}. Please try again.`
+      );
     }
   };
 
@@ -331,7 +642,7 @@ export default function Reports() {
         <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
           <div className="flex items-center justify-center mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-findthem-button" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
@@ -344,7 +655,7 @@ export default function Reports() {
           </p>
           <button
             onClick={() => setShowNoReportsDialog(false)}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full bg-findthem-teal text-white py-2 px-4 rounded-lg hover:bg-findthem-darkGreen transition-colors"
           >
             OK
           </button>
@@ -376,56 +687,91 @@ export default function Reports() {
   return (
     <div className="p-6">
       <div className="space-y-6">
-        {/* REMOVED: Header filter status box */}
-        
-      
-       
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* New Reports */}
+          <div 
+            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-blue-400 hover:shadow-lg cursor-pointer"
+            onClick={() => handleStatsCardClick('new')}
+          >
+            <div className="text-2xl font-bold text-blue-600 my-2">{stats.new}</div>
+            <div className="text-sm text-gray-600 font-medium">New Reports</div>
+            <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
+          </div>
+          
+          {/* Verified Reports */}
+          <div 
+            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-green-400 hover:shadow-lg cursor-pointer"
+            onClick={() => handleStatsCardClick('verified')}
+          >
+            <div className="text-2xl font-bold text-green-600 my-2">{stats.verified}</div>
+            <div className="text-sm text-gray-600 font-medium">Verified Reports</div>
+            <div className="text-xs text-gray-500 mt-1">Confirmed as valid</div>
+          </div>
+          
+          {/* Unverified Reports */}
+          <div 
+            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-yellow-400 hover:shadow-lg cursor-pointer"
+            onClick={() => handleStatsCardClick('unverified')}
+          >
+            <div className="text-2xl font-bold text-yellow-600 my-2">{stats.unverified}</div>
+            <div className="text-sm text-gray-600 font-medium">Unverified Reports</div>
+            <div className="text-xs text-gray-500 mt-1">Need verification</div>
+          </div>
+          
+          {/* False Reports */}
+          <div 
+            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-red-400 hover:shadow-lg cursor-pointer"
+            onClick={() => handleStatsCardClick('false')}
+          >
+            <div className="text-2xl font-bold text-red-600 my-2">{stats.false}</div>
+            <div className="text-sm text-gray-600 font-medium">False Reports</div>
+            <div className="text-xs text-gray-500 mt-1">Marked as false</div>
+          </div>
+        </div>
 
         {/* Search and Filters */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="mb-4">
             <input
               type="text"
-              className="w-full p-4 border rounded-lg"
+              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
               placeholder="🔍 Search by reporter, missing person, or note content..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="flex flex-col md:flex-row gap-4 justify-end items-center">
             <select
-              className="p-3 border rounded-lg"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
             >
-              <option value="">Status</option>
+              <option value="">All Status</option>
               <option value="new">New</option>
               <option value="verified">Verified</option>
               <option value="false">False</option>
               <option value="unverified">Unverified</option>
             </select>
-            
-            {/* NEW: Case ID filter input */}
-           
-            
+
             <input
               type="date"
-              className="p-3 border rounded-lg"
-              value={dateStart}
-              onChange={(e) => setDateStart(e.target.value)}
+              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+              value={filters.dateStart}
+              onChange={(e) => handleFilterChange('dateStart', e.target.value)}
               placeholder="From date"
             />
             
             <button
-              className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
+              className="bg-findthem-darkGreen text-white p-3 rounded-lg hover:bg-findthem-teal disabled:opacity-50 transition-colors w-full md:w-auto"
               onClick={applyFilters}
             >
               Apply Filters
             </button>
 
             <button
-              className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400"
+              className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400 w-full md:w-auto transition-colors"
               onClick={clearAllFilters}
             >
               Clear All
@@ -433,45 +779,41 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Statistics and Table */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          {/* Header */}
-          <div className="p-6 border-b bg-gray-50">
+        {/* Reports Table */}
+        <div id="reports-table" className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
             <div className="flex justify-between items-center">
-              <div className="text-lg font-semibold">Reports Management</div>
-              <div className="flex space-x-6 text-sm">
-                <span>Total: <strong>{stats.total}</strong></span>
-                <span>New: <strong>{stats.new}</strong></span>
-                <span>Verified: <strong>{stats.verified}</strong></span>
-                <span>False: <strong>{stats.false}</strong></span>
-                <span>Unverified: <strong>{stats.unverified}</strong></span>
+              <div>
+                <div className="text-xl font-bold">Reports Management</div>
+              
               </div>
+            
             </div>
           </div>
 
           {/* Bulk Actions */}
           {selectedReports.length > 0 && (
-            <div className="p-4 bg-blue-50 border-b flex justify-between items-center">
+            <div className="p-4 bg-findthem-light border-b flex justify-between items-center">
               <div className="font-semibold">
                 {selectedReports.length} reports selected
               </div>
               <div className="flex space-x-3">
                 <button
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
                   onClick={() => handleBulkStatusChange('verified')}
                   disabled={loading}
                 >
                   Mark as Verified
                 </button>
                 <button
-                  className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+                  className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
                   onClick={() => handleBulkStatusChange('unverified')}
                   disabled={loading}
                 >
                   Mark as Unverified
                 </button>
                 <button
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
                   onClick={() => handleBulkStatusChange('false')}
                   disabled={loading}
                 >
@@ -482,17 +824,16 @@ export default function Reports() {
           )}
 
           {/* Table */}
-       
-
-                 <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
                   <th className="p-4 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedReports.length === filteredReports.length && filteredReports.length > 0}
+                      checked={selectedReports.length === currentReports.length && currentReports.length > 0}
                       onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
                     />
                   </th>
                   <th className="p-4 text-left">ID</th>
@@ -501,25 +842,26 @@ export default function Reports() {
                   <th className="p-4 text-left">Report Status</th>
                   <th className="p-4 text-left">Note Preview</th>
                   <th className="p-4 text-left">Date Submitted</th>
-                  <th className="p-4 text-left">View</th>
+                  <th className="p-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredReports.map((report) => (
-                  <tr key={report.id} className="border-b hover:bg-gray-50">
+                {currentReports.map((report) => (
+                  <tr key={report.id} className="border-b hover:bg-gray-50 transition-colors">
                     <td className="p-4">
                       <input
                         type="checkbox"
                         checked={selectedReports.includes(report.id)}
                         onChange={() => handleSelectReport(report.id)}
+                        className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
                       />
                     </td>
-                    <td className="p-4">{report.id}</td>
+                    <td className="p-4 font-medium">{report.id}</td>
                     <td className="p-4">{report.reporter || 'Anonymous'}</td>
                     <td className="p-4">
                       <button
                         onClick={() => handleCaseClick(report.missing_person)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+                        className="text-findthem-teal hover:text-findthem-darkGreen hover:underline cursor-pointer font-medium transition-colors"
                       >
                         {report.missing_person_name || `Case #${report.missing_person}`}
                       </button>
@@ -538,9 +880,9 @@ export default function Reports() {
                     <td className="p-4">
                       <button
                         onClick={() => handleViewNote(report)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                        className="bg-findthem-teal text-white px-3 py-1 rounded text-sm hover:bg-findthem-darkGreen transition-colors"
                       >
-                        View
+                        View Note
                       </button>
                     </td>
                   </tr>
@@ -549,15 +891,113 @@ export default function Reports() {
             </table>
           </div>
 
+          {/* Empty State */}
           {filteredReports.length === 0 && !showNoReportsDialog && (
             <div className="p-8 text-center text-gray-500">
-              {statusFilter ? 
-                `No ${statusFilter} reports found.` : 
-                'No reports found matching your criteria.'
-              }
+              <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <p className="text-lg font-medium">No reports found</p>
+              <p className="text-sm text-gray-400 mt-1">
+                {filters.status ? 
+                  `No ${filters.status} reports found.` : 
+                  'No reports found matching your criteria.'
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t bg-gray-50">
+              <div className="flex items-center justify-between">
+                {/* Pagination Info */}
+                <div className="text-sm text-gray-600">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredReports.length)} of {filteredReports.length} reports
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center space-x-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {getPageNumbers().map((page, index) => (
+                      <button
+                        key={index}
+                        onClick={() => typeof page === 'number' && handlePageChange(page)}
+                        disabled={page === '...' || page === currentPage}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          page === currentPage
+                            ? 'bg-findthem-teal text-white'
+                            : page === '...'
+                            ? 'text-gray-400 cursor-default'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Jump (for large datasets) */}
+              {totalPages > 10 && (
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className="text-gray-600">Jump to page:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={currentPage}
+                      onChange={(e) => {
+                        const page = parseInt(e.target.value);
+                        if (page >= 1 && page <= totalPages) {
+                          handlePageChange(page);
+                        }
+                      }}
+                      className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                    />
+                    <span className="text-gray-600">of {totalPages}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Custom Dialog - Main Alert Replacement */}
+        <CustomDialog
+          isOpen={customDialog.isOpen}
+          onClose={closeCustomDialog}
+          type={customDialog.type}
+          title={customDialog.title}
+          message={customDialog.message}
+          onConfirm={customDialog.onConfirm}
+          showCancel={customDialog.showCancel}
+          confirmText={customDialog.confirmText}
+          cancelText={customDialog.cancelText}
+        />
 
         {/* No Reports Dialog */}
         <NoReportsDialog />

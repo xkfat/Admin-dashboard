@@ -203,20 +203,7 @@ export default function AIMatches() {
         </div>
       </div>
 
-      {/* AI Matches List */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-lg">
-          <div className="flex items-center space-x-3">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM4.343 15.657l9.9-9.9a2.121 2.121 0 013 3l-9.9 9.9a2.121 2.121 0 01-3-3z"></path>
-            </svg>
-            <h2 className="text-xl font-bold">AI Facial Recognition</h2>
-            {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
-          </div>
-        </div>
-
-        <div className="p-6">
-          {/* Search and Filter */}
+              {/* Search and Filter */}
           <div className="mb-6">
             <div className="flex flex-col md:flex-row gap-4">
               <input 
@@ -250,8 +237,24 @@ export default function AIMatches() {
             </div>
           </div>
 
+
+      {/* AI Matches List */}
+      
+      <div className=" bg-white rounded-lg border border-gray-200">
+<div className="relative bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white p-4">
+          <div className="flex items-center space-x-6 p-1">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM4.343 15.657l9.9-9.9a2.121 2.121 0 013 3l-9.9 9.9a2.121 2.121 0 01-3-3z"></path>
+            </svg>
+            <h2 className="text-xl font-bold">AI Facial Recognition</h2>
+            {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>}
+          </div>
+        </div>
+
+        <div className="p-6">
+  
           {/* Matches Table Header */}
-          <div className="grid grid-cols-12 gap-4 py-3 px-4 bg-gray-50 rounded-lg font-medium text-gray-700 text-sm mb-4">
+          <div className="grid grid-cols-12 gap-12 py-3 px-4 bg-gray-50 rounded-lg font-medium text-gray-700 text-sm mb-4">
             <div className="col-span-3">ORIGINAL CASE</div>
             <div className="col-span-3">MATCHED CASE</div>
             <div className="col-span-2">CONFIDENCE</div>
@@ -317,7 +320,7 @@ export default function AIMatches() {
                     </div>
                     
                     {/* Confidence */}
-                    <div className="col-span-2">
+                    <div className="col-span-2 max-w-[100px]">
                       <div className={`font-bold mb-1 ${getConfidenceTextColor(match.confidence_score)}`}>
                         {match.confidence_score ? `${Math.round(match.confidence_score)}%` : 'N/A'}
                       </div>

@@ -12,7 +12,7 @@ export default function Home() {
     pendingCases: 0,
     totalCases: 0,
     caseUpdatesCount: 0,
-    aiMatches: 0, // AI matches with 100% confidence
+    aiMatches: 0, // AI matches pending review
     aiPendingReviews: 0,
     aiConfirmedMatches: 0
   });
@@ -34,7 +34,28 @@ export default function Home() {
     try {
       setLoading(true);
       
-      // Fetch multiple data sources in parallel
+      // Option 1: Try to use the new dashboard API endpoint
+      try {
+        const dashboardStats = await API.dashboard.fetchDashboardStats();
+        console.log('Dashboard stats from API:', dashboardStats);
+        
+        setStats({
+          activeCases: dashboardStats.active_cases || 0,
+          unverifiedReports: dashboardStats.unverified_reports || 0,
+          pendingCases: dashboardStats.pending_cases || 0, // This is submission_status = 'in_progress'
+          totalCases: dashboardStats.total_cases || 0,
+          caseUpdatesCount: 0, // We can calculate this if needed
+          aiMatches: dashboardStats.ai_pending_reviews || 0, // Show pending AI matches instead of "perfect matches"
+          aiPendingReviews: dashboardStats.ai_pending_reviews || 0,
+          aiConfirmedMatches: dashboardStats.ai_confirmed_matches || 0
+        });
+        
+        return; // Exit early if dashboard API works
+      } catch (dashboardError) {
+        console.log('Dashboard API not available, falling back to manual calculation:', dashboardError);
+      }
+      
+      // Option 2: Fallback - Fetch data manually if dashboard API is not available
       const [casesResponse, aiMatchesResponse, reportsResponse] = await Promise.all([
         API.cases.fetchAll(1, {}),
         fetchAIMatchesData(),
@@ -42,14 +63,32 @@ export default function Home() {
       ]);
 
       const cases = casesResponse.results || [];
+      console.log('Cases data:', cases);
+      console.log('Sample case submission statuses:', cases.slice(0, 3).map(c => ({
+        name: c.full_name,
+        submission_status: c.submission_status,
+        status: c.status
+      })));
+      
+      // Calculate statistics manually
+      const activeCases = cases.filter(c => c.submission_status === 'active').length;
+      const pendingCases = cases.filter(c => c.submission_status === 'in_progress').length;
+      const totalCases = casesResponse.count || cases.length;
+      
+      console.log('Calculated stats:', {
+        activeCases,
+        pendingCases,
+        totalCases,
+        unverifiedReports: reportsResponse.unverified
+      });
       
       setStats({
-        activeCases: cases.filter(c => c.submission_status === 'active').length,
+        activeCases: activeCases,
         unverifiedReports: reportsResponse.unverified || 0,
-        pendingCases: cases.filter(c => c.submission_status === 'in_progress').length,
-        totalCases: casesResponse.count || cases.length,
+        pendingCases: pendingCases,
+        totalCases: totalCases,
         caseUpdatesCount: cases.reduce((total, c) => total + (c.updates?.length || 0), 0),
-        aiMatches: aiMatchesResponse.perfectMatches || 0, // 100% confidence matches
+        aiMatches: aiMatchesResponse.pendingReviews || 0, // Show pending reviews instead of perfect matches
         aiPendingReviews: aiMatchesResponse.pendingReviews || 0,
         aiConfirmedMatches: aiMatchesResponse.confirmedMatches || 0
       });
@@ -65,14 +104,26 @@ export default function Home() {
   // Fetch AI matches data
   const fetchAIMatchesData = async () => {
     try {
-      // Fetch all AI matches
+      // Try to get AI stats first
+      try {
+        const aiStats = await API.aiMatches.getStats();
+        console.log('AI Stats from API:', aiStats);
+        
+        return {
+          pendingReviews: aiStats.pending_reviews || 0,
+          confirmedMatches: aiStats.confirmed_matches || 0,
+          totalMatches: aiStats.total_matches || 0,
+          perfectMatches: aiStats.pending_reviews || 0 // Use pending reviews as "important matches"
+        };
+      } catch (statsError) {
+        console.log('AI stats API not available, fetching all matches:', statsError);
+      }
+      
+      // Fallback: Fetch all AI matches and calculate
       const allMatches = await API.aiMatches.fetchAll();
+      console.log('AI Matches data:', allMatches);
       
       // Calculate different types of matches
-      const perfectMatches = allMatches.filter(match => 
-        match.confidence_score >= 100 || match.confidence_score === 100
-      ).length;
-      
       const pendingReviews = allMatches.filter(match => 
         match.status === 'pending'
       ).length;
@@ -81,20 +132,25 @@ export default function Home() {
         match.status === 'confirmed'
       ).length;
 
+      // Count high-confidence matches instead of perfect 100% matches
+      const highConfidenceMatches = allMatches.filter(match => 
+        match.confidence_score >= 85 && match.status === 'pending'
+      ).length;
+
       return {
-        perfectMatches,
         pendingReviews,
         confirmedMatches,
-        totalMatches: allMatches.length
+        totalMatches: allMatches.length,
+        perfectMatches: highConfidenceMatches
       };
     } catch (error) {
       console.error('Error fetching AI matches:', error);
       // Return default values if AI matches API is not available
       return {
-        perfectMatches: 0,
         pendingReviews: 0,
         confirmedMatches: 0,
-        totalMatches: 0
+        totalMatches: 0,
+        perfectMatches: 0
       };
     }
   };
@@ -103,6 +159,7 @@ export default function Home() {
   const fetchReportsData = async () => {
     try {
       const reports = await API.reports.fetchAll();
+      console.log('Reports data:', reports);
       const unverified = reports.filter(r => r.report_status === 'unverified').length;
       
       return { unverified };
@@ -161,8 +218,8 @@ export default function Home() {
       {
         id: 'ai-match-1',
         type: 'ai_match',
-        title: 'AI found perfect match (100% confidence)',
-        subtitle: 'High confidence match requires admin review',
+        title: 'AI found potential match (High confidence)',
+        subtitle: 'Match requires admin review',
         timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
         icon: 'ai',
         color: 'purple'
@@ -246,7 +303,10 @@ export default function Home() {
   };
 
   const handleNavigateToCases = (filter = '') => {
-    if (filter) {
+    if (filter === 'pending') {
+      // Navigate to cases filtered by submission_status = 'in_progress'
+      navigate(`/cases?submission_status=in_progress`);
+    } else if (filter) {
       navigate(`/cases?submission_status=${filter}`);
     } else {
       navigate('/cases');
@@ -311,6 +371,7 @@ export default function Home() {
               <p className="text-3xl font-bold text-gray-900">
                 {loading ? '...' : stats.activeCases}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Submission status: Active</p>
             </div>
             <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
@@ -329,6 +390,7 @@ export default function Home() {
               <p className="text-3xl font-bold text-gray-900">
                 {loading ? '...' : stats.unverifiedReports}
               </p>
+              <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
             </div>
             <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -336,7 +398,7 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Pending Cases */}
+        {/* Pending Cases (In Progress) */}
         <div 
           className="bg-orange-50 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md"
           onClick={() => handleNavigateToCases('pending')}
@@ -347,6 +409,7 @@ export default function Home() {
               <p className="text-3xl font-bold text-gray-900">
                 {loading ? '...' : stats.pendingCases}
               </p>
+              <p className="text-xs text-gray-500 mt-1">In progress status</p>
             </div>
             <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -354,22 +417,20 @@ export default function Home() {
           </div>
         </div>
         
-        {/* AI Matches - Updated to show 100% confidence matches */}
+        {/* AI Matches - Show pending AI matches instead of perfect matches */}
         <div 
           className="bg-purple-50 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md"
           onClick={handleNavigateToAIMatches}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Perfect AI Matches</p>
+              <p className="text-sm font-medium text-gray-600">AI Matches</p>
               <p className="text-3xl font-bold text-gray-900">
                 {loading ? '...' : stats.aiMatches}
               </p>
-              {stats.aiPendingReviews > 0 && (
-                <p className="text-xs text-purple-600 mt-1">
-                  {stats.aiPendingReviews} pending review
-                </p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {stats.aiPendingReviews > 0 ? 'Pending review' : 'No pending matches'}
+              </p>
             </div>
             <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM4.343 15.657l9.9-9.9a2.121 2.121 0 013 3l-9.9 9.9a2.121 2.121 0 01-3-3z"></path>
@@ -378,65 +439,66 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Add New Case */}
-        <div 
-          className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
-          onClick={handleNavigateToAddCase}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-              </svg>
-            </div>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Add New Case</h3>
-          <p className="text-blue-100">Submit a new missing person case</p>
-        </div>
-        
-        {/* Add Case Update - Replaced AI Matches */}
-        <div 
-          className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
-          onClick={handleAddCaseUpdate}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
-            </div>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Add Case Update</h3>
-          <p className="text-purple-100">Send updates to case reporters</p>
-        </div>
-        
-        {/* Send Alert */}
-        <div 
-          className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
-          onClick={handleSendAlert}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-              </svg>
-            </div>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </div>
-          <h3 className="text-xl font-bold mb-2">Send Alert</h3>
-          <p className="text-green-100">Broadcast notifications to users</p>
-        </div>
+  
+   {/* Action Cards */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  {/* Add New Case */}
+  <div 
+    className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+    onClick={handleNavigateToAddCase}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+        </svg>
       </div>
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </div>
+    <h3 className="text-xl font-bold mb-2">Add New Case</h3>
+    <p className="text-orange-100">Submit a new missing person case</p>
+  </div>
+  
+  {/* Add Case Update */}
+  <div 
+    className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+    onClick={handleAddCaseUpdate}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+      </div>
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </div>
+    <h3 className="text-xl font-bold mb-2">Add Case Update</h3>
+    <p className="text-indigo-100">Send updates to case reporters</p>
+  </div>
+  
+  {/* Send Alert */}
+  <div 
+    className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+    onClick={handleSendAlert}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+        </svg>
+      </div>
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </div>
+    <h3 className="text-xl font-bold mb-2">Send Alert</h3>
+    <p className="text-emerald-100">Broadcast notifications to users</p>
+  </div>
+</div>
 
       {/* Recent Activity - Enhanced with Real Data */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">

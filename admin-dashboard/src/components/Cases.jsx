@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react'; // Add these imports
 import API from '../api.js'; 
 
 export default function Cases() {
   const navigate = useNavigate();
-  const [allCases, setAllCases] = useState([]); // All fetched cases
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [allCases, setAllCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCases, setSelectedCases] = useState(new Set());
@@ -35,6 +37,7 @@ export default function Cases() {
     investigating: 0,
     found: 0
   });
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // Calculate pagination info
   const totalPages = Math.ceil(totalCount / CASES_PER_PAGE);
@@ -42,108 +45,218 @@ export default function Cases() {
   const endIndex = startIndex + CASES_PER_PAGE;
   const displayedCases = allCases.slice(startIndex, endIndex);
 
+  // Generate page numbers for pagination (matching Reports style)
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination
+      if (currentPage <= 3) {
+        // Show first 5 pages
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        if (totalPages > 5) {
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show last 5 pages
+        pages.push(1);
+        if (totalPages > 5) {
+          pages.push('...');
+        }
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show pages around current page
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
+  // Read URL parameters and set initial filters
+  useEffect(() => {
+    console.log('📖 Reading URL parameters...');
+    const urlFilters = {
+      search: searchParams.get('search') || '',
+      gender: searchParams.get('gender') || '',
+      status: searchParams.get('status') || '',
+      submission_status: searchParams.get('submission_status') || '',
+      age_min: searchParams.get('age_min') || '',
+      age_max: searchParams.get('age_max') || ''
+    };
+
+    console.log('🔗 URL Filters found:', urlFilters);
+
+    const hasUrlFilters = Object.values(urlFilters).some(value => value !== '');
+    
+    if (hasUrlFilters) {
+      console.log('✅ Applying URL filters:', urlFilters);
+      setFilters(urlFilters);
+    }
+  }, [searchParams]);
+
+  // Reset to first page when filters change and clear selections
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedCases(new Set()); // Clear selections when filters change
+  }, [totalCount]);
+
+  // Fetch dashboard stats from the dedicated endpoint
+  const fetchDashboardStats = async () => {
+    setStatsLoading(true);
+    try {
+      console.log('🔄 Fetching dashboard stats...');
+      const data = await API.dashboard.fetchDashboardStats();
+      
+      console.log('📊 Dashboard stats received:', data);
+      
+      setStats({
+        total: data.total_cases || 0,
+        active: data.active_cases || 0,
+        in_progress: data.pending_cases || 0,
+        missing: data.total_cases - (data.found_cases || 0) || 0,
+        investigating: 0,
+        found: data.found_cases || 0
+      });
+      
+      console.log('✅ Stats updated successfully');
+    } catch (err) {
+      console.error('❌ Error fetching dashboard stats:', err);
+      console.log('📝 Using fallback stats calculation...');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   // Fetch cases from backend
   const fetchCasesFromBackend = async (backendPage, appendToExisting = false) => {
     setLoading(true);
     setError(null);
     
     try {
+      console.log(`🚀 FETCHING - Page: ${backendPage}, Append: ${appendToExisting}`);
+      console.log('📊 FILTERS BEING SENT:', JSON.stringify(filters, null, 2));
+      
       const data = await API.cases.fetchAll(backendPage, filters);
+      
+      console.log(`✅ RECEIVED ${data.results?.length} cases from backend`);
+      console.log('📋 SAMPLE CASE:', data.results?.[0]);
+      console.log('🔢 TOTAL COUNT:', data.count);
       
       if (appendToExisting) {
         setAllCases(prev => {
           const newCases = [...prev, ...(data.results || [])];
+          console.log(`📈 Total cases after append: ${newCases.length}`);
           return newCases;
         });
       } else {
         setAllCases(data.results || []);
+        console.log(`📝 Set all cases to ${data.results?.length} cases`);
       }
       
       setTotalCount(data.count || 0);
       setHasNextPage(!!data.next);
       setCurrentBackendPage(backendPage);
       
-      // Calculate stats from ALL data (not just current page)
-      calculateStats(data.results || [], data.count || 0);
-      
     } catch (err) {
-      console.error('Error fetching cases:', err);
+      console.error('❌ Error fetching cases:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate comprehensive stats
-  const calculateStats = async (currentResults, totalCount) => {
-    try {
-      // For accurate stats, we need to fetch all cases without pagination
-      // or use a dedicated stats endpoint
-      const allCasesData = await API.cases.fetchAll(1, { 
-        ...filters, 
-        // Remove pagination to get all results for stats
-        page_size: 1000 // or use a dedicated stats endpoint
-      });
-      
-      const allCases = allCasesData.results || [];
-      
-      setStats({
-        total: allCasesData.count || totalCount,
-        active: allCases.filter(c => c.submission_status === 'active').length,
-        in_progress: allCases.filter(c => c.submission_status === 'in_progress').length,
-        missing: allCases.filter(c => c.status === 'missing').length,
-        investigating: allCases.filter(c => c.status === 'under_investigation').length,
-        found: allCases.filter(c => c.status === 'found').length
-      });
-    } catch (err) {
-      console.error('Error calculating stats:', err);
-      // Fallback to current page data if full data fetch fails
-      setStats({
-        total: totalCount,
-        active: currentResults.filter(c => c.submission_status === 'active').length,
-        in_progress: currentResults.filter(c => c.submission_status === 'in_progress').length,
-        missing: currentResults.filter(c => c.status === 'missing').length,
-        investigating: currentResults.filter(c => c.status === 'under_investigation').length,
-        found: currentResults.filter(c => c.status === 'found').length
-      });
-    }
-  };
-
-  // Load initial data
+  // Load initial data - Fetch both cases and stats
   useEffect(() => {
+    console.log('🚀 Initial load - fetching first page and stats');
     setAllCases([]);
     setCurrentPage(1);
     setCurrentBackendPage(1);
-    fetchCasesFromBackend(1, false);
-  }, []);
+    
+    Promise.all([
+      fetchCasesFromBackend(1, false),
+      fetchDashboardStats()
+    ]).then(() => {
+      console.log('✅ Initial data loading complete');
+    }).catch(err => {
+      console.error('❌ Error in initial data loading:', err);
+    });
+  }, [filters]);
 
-  // Handle page change
+  // Handle page change with smooth scrolling
   const handlePageChange = async (newPage) => {
-    const requiredCases = newPage * CASES_PER_PAGE;
-    
-    // Check if we need to fetch more data
-    if (allCases.length < requiredCases && hasNextPage) {
-      await fetchCasesFromBackend(currentBackendPage + 1, true);
+    if (newPage >= 1 && newPage <= totalPages) {
+      console.log(`Changing to page ${newPage}`);
+      
+      const requiredCases = newPage * CASES_PER_PAGE;
+      console.log(`Required cases: ${requiredCases}, Current cases: ${allCases.length}`);
+      
+      // Check if we need to fetch more data
+      if (allCases.length < requiredCases && hasNextPage) {
+        console.log('Need to fetch more data from backend');
+        await fetchCasesFromBackend(currentBackendPage + 1, true);
+      }
+      
+      setCurrentPage(newPage);
+      setSelectedCases(new Set()); // Clear selections when page changes
+      
+      // Scroll to top of cases table
+      document.getElementById('cases-table')?.scrollIntoView({ behavior: 'smooth' });
     }
-    
-    setCurrentPage(newPage);
   };
 
-  // Apply filters
-  const applyFilters = () => {
+  // Apply filters - Also refresh stats when filters change
+  const applyFilters = async () => {
+    console.log('🔍 APPLYING FILTERS - Current filters state:', filters);
     setSelectedCases(new Set());
     setCurrentPage(1);
     setAllCases([]);
     setCurrentBackendPage(1);
-    fetchCasesFromBackend(1, false);
+    
+    // Update URL with current filters
+    const newSearchParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        newSearchParams.set(key, value);
+      }
+    });
+    setSearchParams(newSearchParams);
+    
+    // Fetch both filtered cases and updated stats
+    await Promise.all([
+      fetchCasesFromBackend(1, false),
+      fetchDashboardStats()
+    ]);
   };
 
   // Handle filter changes
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    console.log(`Filter changed: ${key} = ${value}`);
+    setFilters(prev => {
+      const newFilters = {
+        ...prev,
+        [key]: value
+      };
+      console.log('New filters state:', newFilters);
+      return newFilters;
+    });
   };
 
   // Handle search with debounce
@@ -158,7 +271,6 @@ export default function Cases() {
 
   // Handle other filter changes immediately
   useEffect(() => {
-    // Only apply if filters have actual values (not initial empty state)
     if (filters.status || filters.submission_status || filters.gender || filters.age_min || filters.age_max) {
       applyFilters();
     }
@@ -171,7 +283,8 @@ export default function Cases() {
 
   // Navigate to filtered cases
   const handleStatsCardClick = (filterType, filterValue) => {
-    // Update filters and apply them
+    console.log(`📊 Stats card clicked: ${filterType} = ${filterValue}`);
+    
     const newFilters = {
       search: '',
       gender: '',
@@ -192,11 +305,21 @@ export default function Cases() {
     setCurrentPage(1);
     setAllCases([]);
     setCurrentBackendPage(1);
-    
-    // Apply the filter
-    setTimeout(() => {
-      fetchCasesFromBackend(1, false);
-    }, 100);
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    console.log('🧹 Clearing all filters');
+    const emptyFilters = {
+      search: '',
+      gender: '',
+      status: '',
+      submission_status: '',
+      age_min: '',
+      age_max: ''
+    };
+    setFilters(emptyFilters);
+    setSearchParams(new URLSearchParams());
   };
 
   // Toggle case selection
@@ -241,11 +364,13 @@ export default function Cases() {
       await API.cases.bulkUpdateStatus(Array.from(selectedCases), newStatus);
       setSelectedCases(new Set());
       
-      // Refresh data
       setAllCases([]);
       setCurrentPage(1);
       setCurrentBackendPage(1);
-      fetchCasesFromBackend(1, false);
+      await Promise.all([
+        fetchCasesFromBackend(1, false),
+        fetchDashboardStats()
+      ]);
       
       alert(`Successfully updated ${selectedCases.size} cases to ${statusText[newStatus]}`);
     } catch (err) {
@@ -279,11 +404,13 @@ export default function Cases() {
       await API.cases.bulkUpdateSubmissionStatus(Array.from(selectedCases), newStatus);
       setSelectedCases(new Set());
       
-      // Refresh data
       setAllCases([]);
       setCurrentPage(1);
       setCurrentBackendPage(1);
-      fetchCasesFromBackend(1, false);
+      await Promise.all([
+        fetchCasesFromBackend(1, false),
+        fetchDashboardStats()
+      ]);
       
       alert(`Successfully updated ${selectedCases.size} cases to ${statusText[newStatus]}`);
     } catch (err) {
@@ -319,17 +446,19 @@ export default function Cases() {
     }
   };
 
+  console.log(`Render: Page ${currentPage}/${totalPages}, Displaying ${displayedCases.length} cases, Total: ${allCases.length}`);
+
   return (
     <div id="cases-page" className="p-6">
       <div className="space-y-6">
-        {/* Stats Cards - Connected to Backend */}
+        {/* Stats Cards - Connected to Real Backend Data */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div 
             className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-findthem-teal hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('submission_status', 'active')}
           >
             <div className="text-2xl font-bold text-findthem-teal my-2">
-              {loading ? '...' : stats.active}
+              {statsLoading ? '...' : stats.active}
             </div>
             <div className="text-sm text-gray-600 font-medium">Active Cases</div>
             <div className="text-xs text-gray-500 mt-1">Submission status: Active</div>
@@ -340,7 +469,7 @@ export default function Cases() {
             onClick={() => handleStatsCardClick('submission_status', 'in_progress')}
           >
             <div className="text-2xl font-bold text-orange-600 my-2">
-              {loading ? '...' : stats.in_progress}
+              {statsLoading ? '...' : stats.in_progress}
             </div>
             <div className="text-sm text-gray-600 font-medium">In Progress</div>
             <div className="text-xs text-gray-500 mt-1">Currently being processed</div>
@@ -351,21 +480,21 @@ export default function Cases() {
             onClick={() => handleStatsCardClick('status', 'missing')}
           >
             <div className="text-2xl font-bold text-red-600 my-2">
-              {loading ? '...' : stats.missing}
+              {statsLoading ? '...' : stats.missing}
             </div>
             <div className="text-sm text-gray-600 font-medium">Missing Cases</div>
             <div className="text-xs text-gray-500 mt-1">Still searching</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-yellow-400 hover:shadow-lg cursor-pointer"
-            onClick={() => handleStatsCardClick('status', 'under_investigation')}
+            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-green-400 hover:shadow-lg cursor-pointer"
+            onClick={() => handleStatsCardClick('status', 'found')}
           >
-            <div className="text-2xl font-bold text-yellow-600 my-2">
-              {loading ? '...' : stats.investigating}
+            <div className="text-2xl font-bold text-green-600 my-2">
+              {statsLoading ? '...' : stats.found}
             </div>
-            <div className="text-sm text-gray-600 font-medium">Investigating</div>
-            <div className="text-xs text-gray-500 mt-1">Under investigation</div>
+            <div className="text-sm text-gray-600 font-medium">Found Cases</div>
+            <div className="text-xs text-gray-500 mt-1">Successfully resolved</div>
           </div>
         </div>
 
@@ -380,7 +509,7 @@ export default function Cases() {
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
             <select 
               className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal" 
               value={filters.status}
@@ -432,22 +561,24 @@ export default function Cases() {
             >
               {loading ? 'Loading...' : 'Apply Filters'}
             </button>
+            <button
+              className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-colors"
+              onClick={clearAllFilters}
+            >
+              Clear All
+            </button>
           </div>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            Error: {error}
-          </div>
-        )}
-
         {/* Cases Table */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-4 border-b">
-            <div className="text-lg font-semibold">Missing Persons Cases</div>
-            <div className="text-sm text-gray-500">
-              Showing {displayedCases.length} of {totalCount} cases
+        <div id="cases-table" className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-xl font-bold">Cases Management</div>
+              
+              </div>
+            
             </div>
           </div>
 
@@ -561,7 +692,16 @@ export default function Cases() {
                 ) : displayedCases.length === 0 ? (
                   <tr>
                     <td colSpan="10" className="p-8 text-center text-gray-500">
-                      No cases found
+                      <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                      </svg>
+                      <p className="text-lg font-medium">No cases found</p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {Object.values(filters).some(f => f) 
+                          ? 'No cases found matching your criteria.' 
+                          : 'No cases have been submitted yet.'
+                        }
+                      </p>
                     </td>
                   </tr>
                 ) : (
@@ -617,33 +757,92 @@ export default function Cases() {
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalCount > 0 && (
-            <div className="p-4 border-t flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                Showing {displayedCases.length} of {totalCount} cases
-                <span className="ml-2">
-                  (Page {currentPage} of {totalPages})
-                </span>
+          {/* Enhanced Pagination - Matching Reports Style */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t bg-gray-50">
+              <div className="flex items-center justify-between">
+                {/* Pagination Info */}
+                <div className="text-sm text-gray-600">
+                  Showing {startIndex + 1} to {Math.min(endIndex, totalCount)} of {totalCount} cases
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex items-center space-x-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {getPageNumbers().map((page, index) => (
+                      <button
+                        key={index}
+                        onClick={() => typeof page === 'number' && handlePageChange(page)}
+                        disabled={page === '...' || page === currentPage}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          page === currentPage
+                            ? 'bg-findthem-teal text-white'
+                            : page === '...'
+                            ? 'text-gray-400 cursor-default'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </button>
+                </div>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  disabled={currentPage <= 1 || loading}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                >
-                  Previous
-                </button>
-                <span className="px-4 py-2 text-sm bg-gray-100 rounded">
-                  Page {currentPage}
-                </span>
-                <button
-                  className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  disabled={currentPage >= totalPages || loading}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                >
-                  Next
-                </button>
+
+              {/* Quick Jump (for large datasets) */}
+              {totalPages > 10 && (
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className="text-gray-600">Jump to page:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={currentPage}
+                      onChange={(e) => {
+                        const page = parseInt(e.target.value);
+                        if (page >= 1 && page <= totalPages) {
+                          handlePageChange(page);
+                        }
+                      }}
+                      className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                    />
+                    <span className="text-gray-600">of {totalPages}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 border-t bg-red-50">
+              <div className="text-red-700 text-sm flex items-center">
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                {error}
               </div>
             </div>
           )}
