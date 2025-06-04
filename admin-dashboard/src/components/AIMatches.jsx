@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, X, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, X, AlertTriangle, Trash2 } from 'lucide-react';
 import API from '../api';
 
 // Custom Dialog Component matching Reports style
@@ -111,8 +111,6 @@ const CustomDialog = ({
             </button>
           </div>
         </div>
-        
-        {/* Removed decorative bottom border */}
       </div>
     </div>
   );
@@ -240,7 +238,7 @@ export default function AIMatches() {
       setAllMatches(matchesData);
       setStats({
         pendingReviews: statsData.pending_reviews || 0,
-        totalScans: statsData.total_matches || 0, // Changed from scans_today to total_matches
+        totalScans: statsData.total_matches || 0,
         confirmedMatches: statsData.confirmed_matches || 0,
         falsePositives: statsData.false_positives || 0
       });
@@ -440,7 +438,7 @@ export default function AIMatches() {
     });
   };
 
-  // Bulk status change function
+  // Enhanced bulk status change function with more options
   const bulkStatusChange = async (newStatus) => {
     if (selectedMatches.length === 0) {
       showCustomDialog(
@@ -453,7 +451,9 @@ export default function AIMatches() {
 
     const statusNames = {
       'confirmed': 'Confirmed',
-      'rejected': 'Rejected'
+      'rejected': 'Rejected',
+      'pending': 'Pending Review',
+      'under_review': 'Under Review'
     };
 
     showCustomDialog(
@@ -472,9 +472,10 @@ export default function AIMatches() {
               return API.aiMatches.confirm(matchId, 'Bulk confirmed via admin dashboard');
             } else if (newStatus === 'rejected') {
               return API.aiMatches.reject(matchId, 'Bulk rejected via admin dashboard');
+            } else if (newStatus === 'pending' || newStatus === 'under_review') {
+              // For pending and under_review, we'll use the review endpoint with the new action
+              return API.aiMatches.review(matchId, newStatus, 'Bulk status change via admin dashboard');
             } else {
-              // For under_review, you might need to add this API method
-              // For now, we'll show a message that this needs to be implemented
               return Promise.resolve();
             }
           });
@@ -506,76 +507,126 @@ export default function AIMatches() {
     );
   };
 
-  // Confirm match
-  const confirmMatch = async (matchId, originalCaseName) => {
+  // Enhanced bulk delete function
+  const bulkDeleteMatches = async () => {
+    if (selectedMatches.length === 0) {
+      showCustomDialog(
+        'warning',
+        'No Matches Selected',
+        'Please select matches to delete before proceeding.'
+      );
+      return;
+    }
+
     showCustomDialog(
       'confirm',
-      'Confirm Match',
-      `Are you sure you want to confirm this match for ${originalCaseName}? This will mark the original case as "Found".`,
+      'Delete Selected Matches',
+      `⚠️ Are you sure you want to permanently delete ${selectedMatches.length} selected AI matches? This action cannot be undone.`,
       async () => {
         closeCustomDialog();
         
         try {
           setLoading(true);
-          const response = await API.aiMatches.confirm(matchId, 'Confirmed via admin dashboard');
+          
+          // Delete each selected match
+          const deletePromises = selectedMatches.map(matchId => 
+            API.aiMatches.delete(matchId)
+          );
+          
+          await Promise.all(deletePromises);
+          
+          setSelectedMatches([]);
+          await fetchData();
           
           showCustomDialog(
             'success',
-            'Match Confirmed! ✅',
-            response.message || `Match confirmed! Case will be marked as found.`
+            'Matches Deleted! 🗑️',
+            `Successfully deleted ${selectedMatches.length} AI matches.`
           );
-          
-          await fetchData();
         } catch (err) {
-          console.error('Error confirming match:', err);
+          console.error('Error in bulk delete:', err);
           showCustomDialog(
             'error',
-            'Confirmation Failed',
-            'Failed to confirm match. Please try again.'
+            'Delete Failed',
+            'Failed to delete matches. Please try again.'
           );
         } finally {
           setLoading(false);
         }
       },
       true,
-      'Confirm',
+      'Delete',
       'Cancel'
     );
   };
 
-  // Reject match
-  const rejectMatch = async (matchId, originalCaseName) => {
+  // Enhanced single match actions
+  const handleSingleMatchAction = async (matchId, action, caseName) => {
+    const actionNames = {
+      'confirm': 'confirm this match',
+      'reject': 'reject this match', 
+      'pending': 'set this match back to pending',
+      'under_review': 'set this match under review',
+      'delete': 'delete this match'
+    };
+
+    const actionMessages = {
+      'confirm': `This will mark the original case as "Found".`,
+      'reject': `This will be marked as a false positive.`,
+      'pending': `This will reset the match to pending review status.`,
+      'under_review': `This will set the match for further investigation.`,
+      'delete': `⚠️ This action cannot be undone.`
+    };
+
     showCustomDialog(
-      'confirm',
-      'Reject Match',
-      `Are you sure you want to reject this match for ${originalCaseName}? This will be marked as a false positive.`,
+      action === 'delete' ? 'warning' : 'confirm',
+      `${action.charAt(0).toUpperCase() + action.slice(1)} Match`,
+      `Are you sure you want to ${actionNames[action]} for ${caseName}? ${actionMessages[action]}`,
       async () => {
         closeCustomDialog();
         
         try {
           setLoading(true);
-          const response = await API.aiMatches.reject(matchId, 'Rejected via admin dashboard');
+          let response;
+          
+          if (action === 'confirm') {
+            response = await API.aiMatches.confirm(matchId, 'Confirmed via admin dashboard');
+          } else if (action === 'reject') {
+            response = await API.aiMatches.reject(matchId, 'Rejected via admin dashboard');
+          } else if (action === 'pending' || action === 'under_review') {
+            response = await API.aiMatches.review(matchId, action, `Set to ${action} via admin dashboard`);
+          } else if (action === 'delete') {
+            response = await API.aiMatches.delete(matchId);
+          }
+          
+          const successMessages = {
+            'confirm': 'Match Confirmed! ✅',
+            'reject': 'Match Rejected ✅',
+            'pending': 'Match Reset to Pending ✅',
+            'under_review': 'Match Set Under Review ✅',
+            'delete': 'Match Deleted! 🗑️'
+          };
           
           showCustomDialog(
             'success',
-            'Match Rejected ✅',
-            response.message || `Match rejected and marked as false positive.`
+            successMessages[action],
+            response?.message || `Successfully ${action}ed the match.`
           );
           
           await fetchData();
         } catch (err) {
-          console.error('Error rejecting match:', err);
+          console.error(`Error ${action}ing match:`, err);
           showCustomDialog(
             'error',
-            'Rejection Failed',
-            'Failed to reject match. Please try again.'
+            `${action.charAt(0).toUpperCase() + action.slice(1)} Failed`,
+            `Failed to ${action} match. Please try again.`
           );
         } finally {
           setLoading(false);
         }
       },
       true,
-      'Reject',
+      action === 'delete' ? 'Delete' : action.charAt(0).toUpperCase() + action.slice(1),
       'Cancel'
     );
   };
@@ -709,6 +760,7 @@ export default function AIMatches() {
               <option value="pending">Pending</option>
               <option value="confirmed">Confirmed</option>
               <option value="rejected">Rejected</option>
+              <option value="under_review">Under Review</option>
             </select>
 
             <select
@@ -757,28 +809,53 @@ export default function AIMatches() {
             </div>
           </div>
 
-          {/* Bulk Actions */}
+          {/* Enhanced Bulk Actions - All buttons in one row */}
           {selectedMatches.length > 0 && (
-            <div className="p-4 bg-findthem-light border-b flex justify-between items-center">
-              <div className="font-semibold">
-                {selectedMatches.length} matches selected
-              </div>
-              <div className="flex space-x-3">
-              
-                <button
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
-                  onClick={() => bulkStatusChange('confirmed')}
-                  disabled={loading}
-                >
-                  Change to Confirmed
-                </button>
-                <button
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-                  onClick={() => bulkStatusChange('rejected')}
-                  disabled={loading}
-                >
-                  Change to Rejected
-                </button>
+            <div className="p-4 bg-findthem-light border-b">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="font-semibold">
+                  {selectedMatches.length} matches selected
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {/* Status Change Buttons */}
+                  <button
+                    className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors font-medium"
+                    onClick={() => bulkStatusChange('confirmed')}
+                    disabled={loading}
+                  >
+                    Set Confirmed
+                  </button>
+                  <button
+                    className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors font-medium"
+                    onClick={() => bulkStatusChange('rejected')}
+                    disabled={loading}
+                  >
+                    Set Rejected
+                  </button>
+                  <button
+                    className="bg-yellow-600 text-white px-3 py-2 rounded text-sm hover:bg-yellow-700 transition-colors font-medium"
+                    onClick={() => bulkStatusChange('pending')}
+                    disabled={loading}
+                  >
+                    Set Pending
+                  </button>
+                  <button
+                    className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors font-medium"
+                    onClick={() => bulkStatusChange('under_review')}
+                    disabled={loading}
+                  >
+                    Set Under Review
+                  </button>
+                  {/* Delete Button */}
+                  <button
+                    className="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors flex items-center font-medium"
+                    onClick={bulkDeleteMatches}
+                    disabled={loading}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Delete Selected
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -801,7 +878,7 @@ export default function AIMatches() {
                   <th className="p-4 text-left">Confidence</th>
                   <th className="p-4 text-left">Status</th>
                   <th className="p-4 text-left">Date</th>
-                  <th className="p-4 text-left w-32">Actions</th>
+                  <th className="p-4 text-left w-48">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -905,7 +982,7 @@ export default function AIMatches() {
                       {/* Status */}
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(match.status)}`}>
-                          {match.status}
+                          {match.status.replace('_', ' ')}
                         </span>
                       </td>
                       
@@ -914,9 +991,10 @@ export default function AIMatches() {
                         {match.processing_date_formatted || formatDate(match.processing_date) || 'N/A'}
                       </td>
                       
-                      {/* Actions */}
+                      {/* Enhanced Actions */}
                       <td className="p-4">
-                        <div className="flex space-x-1">
+                        <div className="flex flex-wrap gap-1">
+                          {/* View Details Button - Always Available */}
                           <button 
                             className="bg-findthem-teal text-white p-2 rounded-lg hover:bg-findthem-darkGreen transition-all text-xs" 
                             onClick={() => viewMatch(match.id)} 
@@ -928,11 +1006,13 @@ export default function AIMatches() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
                           </button>
+
+                          {/* Status-specific Action Buttons */}
                           {match.status === 'pending' && (
                             <>
                               <button 
                                 className="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition-all text-xs" 
-                                onClick={() => confirmMatch(match.id, match.original_case_details?.full_name)} 
+                                onClick={() => handleSingleMatchAction(match.id, 'confirm', match.original_case_details?.full_name)} 
                                 title="Confirm Match"
                                 disabled={loading}
                               >
@@ -942,8 +1022,43 @@ export default function AIMatches() {
                               </button>
                               <button 
                                 className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all text-xs" 
-                                onClick={() => rejectMatch(match.id, match.original_case_details?.full_name)} 
+                                onClick={() => handleSingleMatchAction(match.id, 'reject', match.original_case_details?.full_name)} 
                                 title="Reject Match"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                              </button>
+                              <button 
+                                className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'under_review', match.original_case_details?.full_name)} 
+                                title="Set Under Review"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                              </button>
+                            </>
+                          )}
+
+                          {match.status === 'confirmed' && (
+                            <>
+                              <button 
+                                className="bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'pending', match.original_case_details?.full_name)} 
+                                title="Reset to Pending"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                              </button>
+                              <button 
+                                className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'reject', match.original_case_details?.full_name)} 
+                                title="Change to Rejected"
                                 disabled={loading}
                               >
                                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -952,16 +1067,76 @@ export default function AIMatches() {
                               </button>
                             </>
                           )}
-                          {match.status === 'confirmed' && (
-                            <span className="text-green-600 text-xs font-medium px-2 py-1">
-                              ✓ Confirmed
-                            </span>
-                          )}
+
                           {match.status === 'rejected' && (
-                            <span className="text-red-600 text-xs font-medium px-2 py-1">
-                              ✗ Rejected
-                            </span>
+                            <>
+                              <button 
+                                className="bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'pending', match.original_case_details?.full_name)} 
+                                title="Reset to Pending"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                              </button>
+                              <button 
+                                className="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'confirm', match.original_case_details?.full_name)} 
+                                title="Change to Confirmed"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                              </button>
+                            </>
                           )}
+
+                          {match.status === 'under_review' && (
+                            <>
+                              <button 
+                                className="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'confirm', match.original_case_details?.full_name)} 
+                                title="Confirm Match"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                              </button>
+                              <button 
+                                className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'reject', match.original_case_details?.full_name)} 
+                                title="Reject Match"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                              </button>
+                              <button 
+                                className="bg-yellow-500 text-white p-2 rounded-lg hover:bg-yellow-600 transition-all text-xs" 
+                                onClick={() => handleSingleMatchAction(match.id, 'pending', match.original_case_details?.full_name)} 
+                                title="Reset to Pending"
+                                disabled={loading}
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                              </button>
+                            </>
+                          )}
+
+                          {/* Delete Button - Always Available */}
+                          <button 
+                            className="bg-gray-600 text-white p-2 rounded-lg hover:bg-gray-700 transition-all text-xs" 
+                            onClick={() => handleSingleMatchAction(match.id, 'delete', match.original_case_details?.full_name)} 
+                            title="Delete Match"
+                            disabled={loading}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1159,8 +1334,6 @@ export default function AIMatches() {
                     </p>
                   </div>
                 </div>
-
-    
 
                 {/* Action Buttons */}
                 <div className="flex justify-center mt-6 space-x-3">

@@ -1,231 +1,592 @@
-export default function Notification() {
-    return(
-        <div className="bg-white rounded-lg shadow-sm border">
-  <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white p-4 rounded-t-lg">
-    <h2 className="text-lg font-semibold">Admin Notifications</h2>
-  </div>
-  <div id="notificationsList">
-    {/* Notification 1 - Unread */}
-    <div
-      className="notification-item unread"
-      data-type="cases"
-      data-read="false"
-    >
-      <div className="flex items-start">
-        <div className="notification-icon-circle notification-new">
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-            />
-          </svg>
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                New missing person case submitted: John Doe
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                A new case has been submitted and requires review. AI facial
-                recognition scan has been initiated automatically.
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                2023-05-29 • Case ID: #001
-              </p>
-            </div>
-            <button
-              className="text-blue-600 text-sm font-medium hover:text-blue-800"
-              onclick="viewCase(1)"
-            >
-              View Case
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    {/* Notification 2 - Unread */}
-    <div
-      className="notification-item unread"
-      data-type="reports"
-      data-read="false"
-    >
-      <div className="flex items-start">
-        <div className="notification-icon-circle notification-report">
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                New report submitted for Jane Smith case
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Anonymous witness reported a sighting near downtown area.
-                Requires verification.
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                2023-05-28 • Report ID: #R-003
-              </p>
-            </div>
-            <button
-              className="text-green-600 text-sm font-medium hover:text-green-800"
-              onclick="viewReport(3)"
-            >
-              View Report
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    {/* Notification 3 - Unread */}
-    <div
-      className="notification-item unread"
-      data-type="matches"
-      data-read="false"
-    >
-      <div className="flex items-start">
-        <div className="notification-icon-circle notification-match">
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 17h5l-5 5v-5zM4.343 15.657l9.9-9.9a2.121 2.121 0 013 3l-9.9 9.9a2.121 2.121 0 01-3-3z"
-            />
-          </svg>
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                AI found potential match (95% confidence)
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                High confidence match found for Mike Johnson case. Requires
-                admin review and confirmation.
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                2023-05-28 • Match ID: #M-005
-              </p>
-            </div>
-            <button
-              className="text-purple-600 text-sm font-medium hover:text-purple-800"
-              onclick="showPage('ai-matches')"
-            >
-              Review Match
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    {/* Notification 4 - Read */}
-    <div className="notification-item" data-type="cases" data-read="true">
-      <div className="flex items-start">
-        <div className="notification-icon-circle notification-system">
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                Case status updated: Sarah Wilson → Found
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Case has been successfully resolved. Match was confirmed by
-                admin review.
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                2023-05-27 • Case ID: #004
-              </p>
-            </div>
-            <span className="text-green-600 text-sm font-medium">Resolved</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    {/* Notification 5 - Read */}
-    <div className="notification-item" data-type="system" data-read="true">
-      <div className="flex items-start">
-        <div className="notification-icon-circle notification-system">
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-            />
-          </svg>
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                System backup completed successfully
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Daily system backup has been completed. All data is secure and
-                up to date.
-              </p>
-              <p className="text-xs text-gray-400 mt-2">2023-05-27 • System</p>
-            </div>
-            <span className="text-gray-500 text-sm">System</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    {/* More notifications can be added here */}
-  </div>
-  <div className="p-4 text-center border-t">
-    <button
-      className="text-blue-600 hover:text-blue-800 font-medium"
-      onclick="loadMoreNotifications()"
-    >
-      Load More Notifications
-    </button>
-  </div>
-</div>
+// src/components/AdminNotifications.jsx - Simplified Component
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Bell, Users, FileText, Bot, Eye, Trash2, CheckCircle, 
+  AlertCircle, Clock, ChevronLeft, ChevronRight, X 
+} from 'lucide-react';
+import API from '../api';
 
-    )
-}
+// Custom Dialog Component
+const CustomDialog = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  message, 
+  type = 'info',
+  onConfirm = null,
+  confirmText = 'OK',
+  cancelText = 'Cancel',
+  showCancel = false
+}) => {
+  if (!isOpen) return null;
+
+  const getTypeConfig = () => {
+    switch (type) {
+      case 'success':
+        return {
+          icon: CheckCircle,
+          iconColor: 'text-green-600',
+          iconBg: 'bg-green-100',
+          buttonColor: 'bg-green-600 hover:bg-green-700'
+        };
+      case 'error':
+        return {
+          icon: AlertCircle,
+          iconColor: 'text-red-600',
+          iconBg: 'bg-red-100',
+          buttonColor: 'bg-red-600 hover:bg-red-700'
+        };
+      case 'warning':
+        return {
+          icon: AlertCircle,
+          iconColor: 'text-yellow-600',
+          iconBg: 'bg-yellow-100',
+          buttonColor: 'bg-yellow-600 hover:bg-yellow-700'
+        };
+      default:
+        return {
+          icon: Bell,
+          iconColor: 'text-findthem-button',
+          iconBg: 'bg-findthem-light',
+          buttonColor: 'bg-findthem-button hover:bg-findthem-bg'
+        };
+    }
+  };
+
+  const config = getTypeConfig();
+  const IconComponent = config.icon;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+        <div className="bg-findthem-bg rounded-t-2xl p-6 text-center relative">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          
+          <div className={`w-16 h-16 ${config.iconBg} rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg`}>
+            <IconComponent className={`h-8 w-8 ${config.iconColor}`} />
+          </div>
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+        </div>
+        
+        <div className="p-6">
+          <p className="text-gray-700 text-center leading-relaxed mb-6">{message}</p>
+          
+          <div className="flex gap-3 justify-center">
+            {showCancel && (
+              <button
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-400 transition-colors"
+              >
+                {cancelText}
+              </button>
+            )}
+            
+            <button
+              onClick={onConfirm || onClose}
+              className={`px-6 py-3 ${config.buttonColor} text-white rounded-xl font-medium transition-colors shadow-lg`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminNotifications = () => {
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [notificationsPerPage] = useState(10);
+
+  // Dialog state
+  const [customDialog, setCustomDialog] = useState({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: null,
+    showCancel: false
+  });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(notifications.length / notificationsPerPage);
+  const startIndex = (currentPage - 1) * notificationsPerPage;
+  const endIndex = startIndex + notificationsPerPage;
+  const currentNotifications = notifications.slice(startIndex, endIndex);
+
+  // Show dialog helper
+  const showDialog = (type, title, message, onConfirm = null, showCancel = false) => {
+    setCustomDialog({
+      isOpen: true,
+      type,
+      title,
+      message,
+      onConfirm,
+      showCancel
+    });
+  };
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await API.notifications.fetchCurrentAdminNotifications();
+      
+      const allNotifications = response.notifications || response || [];
+      
+      // Sort by date (newest first)
+      const sortedNotifications = allNotifications.sort((a, b) => 
+        new Date(b.date_created) - new Date(a.date_created)
+      );
+      
+      setNotifications(sortedNotifications);
+      
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError('Failed to load notifications. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mark notification as read
+  const markAsRead = async (notificationId) => {
+    try {
+      await API.notifications.markAsRead(notificationId);
+      
+      // Update local state
+      setNotifications(prev => prev.map(notif => 
+        notif.id === notificationId ? { ...notif, is_read: true } : notif
+      ));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      showDialog('error', 'Error', 'Failed to mark notification as read.');
+    }
+  };
+
+  // Delete notification
+  const deleteNotification = async (notificationId) => {
+    showDialog(
+      'warning',
+      'Delete Notification',
+      'Are you sure you want to delete this notification? This action cannot be undone.',
+      async () => {
+        try {
+          await API.notifications.delete(notificationId);
+          
+          // Update local state
+          setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+          
+          showDialog('success', 'Deleted!', 'Notification deleted successfully.');
+        } catch (error) {
+          console.error('Error deleting notification:', error);
+          showDialog('error', 'Error', 'Failed to delete notification.');
+        }
+        setCustomDialog(prev => ({ ...prev, isOpen: false }));
+      },
+      true
+    );
+  };
+
+  // Handle notification click
+  const handleNotificationClick = async (notification) => {
+    // Mark as read if unread
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+
+    // Navigate based on notification type and content
+    // Check for AI/match related notifications first (highest priority)
+    if (notification.target_model === 'aimatch' || 
+        notification.message.toLowerCase().includes('ai') || 
+        notification.message.toLowerCase().includes('match') ||
+        notification.message.toLowerCase().includes('potential') ||
+        notification.message.toLowerCase().includes('found')) {
+      navigate(`/aimatches`);
+    } else if (notification.target_model === 'missingperson' && notification.target_id) {
+      navigate(`/cases/${notification.target_id}`);
+    } else if (notification.target_model === 'report' && notification.target_id) {
+      navigate(`/reports`);
+    }
+  };
+
+  // Get notification icon
+  const getNotificationIcon = (type, message = '') => {
+    if (message.includes('AI') || message.includes('match')) {
+      return <Bot className="h-5 w-5 text-purple-600" />;
+    }
+    
+    switch (type) {
+      case 'missing_person':
+        return <Users className="h-5 w-5 text-blue-600" />;
+      case 'report':
+        return <FileText className="h-5 w-5 text-green-600" />;
+      case 'system':
+        return <Bot className="h-5 w-5 text-purple-600" />;
+      default:
+        return <Bell className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } else if (diffInHours < 168) { // Less than a week
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  };
+
+  // Pagination helpers
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        if (totalPages > 5) {
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        if (totalPages > 5) {
+          pages.push('...');
+        }
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    showDialog(
+      'warning',
+      'Mark All as Read',
+      'Are you sure you want to mark all notifications as read?',
+      async () => {
+        try {
+          await API.notifications.markAllAsRead();
+          
+          // Update local state
+          setNotifications(prev => prev.map(notif => ({ ...notif, is_read: true })));
+          
+          showDialog('success', 'All Marked as Read!', 'All notifications have been marked as read.');
+        } catch (error) {
+          console.error('Error marking all as read:', error);
+          showDialog('error', 'Error', 'Failed to mark all notifications as read.');
+        }
+        setCustomDialog(prev => ({ ...prev, isOpen: false }));
+      },
+      true
+    );
+  };
+
+  // Clear all notifications
+  const clearAll = async () => {
+    showDialog(
+      'warning',
+      'Clear All Notifications',
+      'Are you sure you want to clear all notifications? This action cannot be undone.',
+      async () => {
+        try {
+          await API.notifications.clearAll();
+          
+          // Update local state
+          setNotifications([]);
+          
+          showDialog('success', 'All Cleared!', 'All notifications have been cleared.');
+        } catch (error) {
+          console.error('Error clearing all notifications:', error);
+          showDialog('error', 'Error', 'Failed to clear all notifications.');
+        }
+        setCustomDialog(prev => ({ ...prev, isOpen: false }));
+      },
+      true
+    );
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  if (loading && notifications.length === 0) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-findthem-button mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading notifications...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong className="font-bold">Error: </strong>
+          <span>{error}</span>
+          <button 
+            onClick={fetchNotifications}
+            className="ml-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Notifications</h1>
+              <p className="text-gray-600 mt-1">{notifications.length} total notifications</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={markAllAsRead}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                disabled={notifications.length === 0 || notifications.every(n => n.is_read)}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Mark All Read
+              </button>
+              <button
+                onClick={clearAll}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                disabled={notifications.length === 0}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All
+              </button>
+              <button
+                onClick={fetchNotifications}
+                className="bg-findthem-button text-white px-4 py-2 rounded-lg hover:bg-findthem-bg transition-colors flex items-center"
+                disabled={loading}
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications List */}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b bg-gradient-to-br from-findthem-button via-findthem-button to-findthem-bg text-white">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Notifications</h2>
+              <div className="text-sm">
+                {notifications.filter(n => !n.is_read).length} unread
+              </div>
+            </div>
+          </div>
+
+          <div className="divide-y divide-gray-100">
+            {currentNotifications.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">No notifications found</p>
+                <p className="text-sm mt-1">You're all caught up! New notifications will appear here.</p>
+              </div>
+            ) : (
+              currentNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    !notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <div className="flex-shrink-0 mt-1">
+                        {getNotificationIcon(notification.notification_type, notification.message)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                            {notification.message}
+                          </p>
+                          {!notification.is_read && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              New
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <span>{formatDate(notification.date_created)}</span>
+                          <span className="capitalize">{notification.notification_type.replace('_', ' ')}</span>
+                          {notification.target_model && (
+                            <span className="text-findthem-button">Click to view details</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 ml-4">
+                      {!notification.is_read && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
+                          title="Mark as read"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                        className="text-red-600 hover:text-red-800 p-1 rounded transition-colors"
+                        title="Delete notification"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {startIndex + 1} to {Math.min(endIndex, notifications.length)} of {notifications.length} notifications
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </button>
+
+                  <div className="flex items-center space-x-1">
+                    {getPageNumbers().map((page, index) => (
+                      <button
+                        key={index}
+                        onClick={() => typeof page === 'number' && handlePageChange(page)}
+                        disabled={page === '...' || page === currentPage}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          page === currentPage
+                            ? 'bg-findthem-button text-white'
+                            : page === '...'
+                            ? 'text-gray-400 cursor-default'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Custom Dialog */}
+        <CustomDialog
+          isOpen={customDialog.isOpen}
+          onClose={() => setCustomDialog(prev => ({ ...prev, isOpen: false }))}
+          type={customDialog.type}
+          title={customDialog.title}
+          message={customDialog.message}
+          onConfirm={customDialog.onConfirm}
+          showCancel={customDialog.showCancel}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default AdminNotifications;

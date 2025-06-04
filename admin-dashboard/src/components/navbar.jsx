@@ -1,4 +1,5 @@
 import { AlignJustify, Bell, Moon, LogOut } from 'lucide-react';
+import NotificationIcon from './NotificationIcon'; 
 
 export default function Navbar({ onLogout, onToggleSidebar }) {
   const handleLogoutClick = () => {
@@ -13,15 +14,16 @@ export default function Navbar({ onLogout, onToggleSidebar }) {
       </button>
       
       <h1 className="text-2xl font-semibold text-white text-center">Admin Dashboard</h1>
-      
-      <div className='flex gap-4 items-center'>
-        <button className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors">
-          <Bell color='white' />
-        </button>
+
+       <div className='flex gap-4 items-center'>
+        {/* Notification Icon with Badge */}
+        <NotificationIcon />
         
         <button className="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors">
           <Moon color='white' />
         </button>
+      
+       
         
         <button
           onClick={handleLogoutClick}

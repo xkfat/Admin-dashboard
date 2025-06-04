@@ -241,6 +241,12 @@ export const API = {
   // ========================
   // NOTIFICATION APIs
   // ========================
+// src/api.js - Updated notifications section
+// ... (keeping all existing code, just updating the notifications section)
+
+  // ========================
+  // NOTIFICATION APIs (UPDATED)
+  // ========================
   notifications: {
     // Fetch user notifications
     fetchAll: async (type = null) => {
@@ -260,6 +266,17 @@ export const API = {
       }
     },
 
+    // Get unread notification count
+    getUnreadCount: async () => {
+      try {
+        const data = await makeRequest('/api/notifications/unread-count/');
+        return data;
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+        throw error;
+      }
+    },
+
     // Get notification by ID
     getById: async (notificationId) => {
       try {
@@ -271,16 +288,26 @@ export const API = {
       }
     },
 
-    // Mark notification as read
-    markAsRead: async (notificationId) => {
+  markAsRead: async (notificationId) => {
+    try {
+      // Use the existing view_notification endpoint which marks as read
+      const data = await makeRequest(`/api/notifications/${notificationId}/`);
+      return data;
+    } catch (error) {
+      console.error(`Error marking notification ${notificationId} as read:`, error);
+      throw error;
+    }
+  },
+
+    // Mark all notifications as read
+    markAllAsRead: async () => {
       try {
-        const data = await makeRequest(`/api/notifications/${notificationId}/`, {
-          method: 'PATCH',
-          body: { is_read: true }
+        const data = await makeRequest('/api/notifications/mark-all-read/', {
+          method: 'POST'
         });
         return data;
       } catch (error) {
-        console.error(`Error marking notification ${notificationId} as read:`, error);
+        console.error('Error marking all notifications as read:', error);
         throw error;
       }
     },
@@ -294,6 +321,19 @@ export const API = {
         return true;
       } catch (error) {
         console.error(`Error deleting notification ${notificationId}:`, error);
+        throw error;
+      }
+    },
+
+    // Clear all notifications
+    clearAll: async () => {
+      try {
+        const data = await makeRequest('/api/notifications/clear-all/', {
+          method: 'DELETE'
+        });
+        return data;
+      } catch (error) {
+        console.error('Error clearing all notifications:', error);
         throw error;
       }
     },
@@ -322,8 +362,8 @@ export const API = {
         if (filters.is_read !== undefined) queryParams.append('is_read', filters.is_read);
         
         const endpoint = queryParams.toString() 
-          ? `/api/notifications/all/?${queryParams}` 
-          : '/api/notifications/all/';
+          ? `/api/notifications/?${queryParams}` 
+          : '/api/notifications/';
         
         const data = await makeRequest(endpoint);
         return data;
@@ -342,7 +382,44 @@ export const API = {
         console.error('Error fetching notification stats:', error);
         throw error;
       }
+    },
+     fetchCurrentAdminNotifications: async (type = null) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (type) queryParams.append('type', type);
+      
+      const endpoint = queryParams.toString() 
+        ? `/api/notifications/admin/my-notifications/?${queryParams}` 
+        : '/api/notifications/admin/my-notifications/';
+      
+      const data = await makeRequest(endpoint);
+      return data;
+    } catch (error) {
+      console.error('Error fetching current admin notifications:', error);
+      throw error;
     }
+  },
+
+  // NEW: Get all notifications sent TO admin users (any admin)
+  fetchAllAdminUserNotifications: async (filters = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (filters.type) queryParams.append('type', filters.type);
+      if (filters.is_read !== undefined) queryParams.append('is_read', filters.is_read);
+      if (filters.user_id) queryParams.append('user_id', filters.user_id);
+      
+      const endpoint = queryParams.toString() 
+        ? `/api/notifications/admin/admin-only/?${queryParams}` 
+        : '/api/notifications/admin/admin-only/';
+      
+      const data = await makeRequest(endpoint);
+      return data;
+    } catch (error) {
+      console.error('Error fetching admin user notifications:', error);
+      throw error;
+    }
+  },
   },
 
   cases: {
@@ -696,6 +773,17 @@ export const API = {
         return await API.aiMatches.review(matchId, 'reject', adminNotes);
       } catch (error) {
         console.error(`Error rejecting AI match ${matchId}:`, error);
+        throw error;
+      }
+    },
+      delete: async (matchId) => {
+      try {
+        const data = await makeRequest(`/api/ai-matches/${matchId}/delete/`, {
+          method: 'DELETE'
+        });
+        return data;
+      } catch (error) {
+        console.error(`Error deleting AI match ${matchId}:`, error);
         throw error;
       }
     }
