@@ -278,7 +278,7 @@ const CaseNotificationModal = ({ isOpen, onClose, caseData, onSend }) => {
               >
                 <option value="case_update">Case Update</option>
                 <option value="missing_person">Missing Person Alert</option>
-                <option value="system">System Notification</option>
+                <option value="system">General Notification</option>
               </select>
             </div>
           </div>

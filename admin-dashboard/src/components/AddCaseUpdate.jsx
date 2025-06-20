@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, Search, User, CheckCircle, AlertCircle, MessageSquare, FileText } from 'lucide-react';
+import { X, Send, Search, User, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import API from '../api';
 
 // Success Dialog Component
@@ -45,14 +45,11 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [selectedCase, setSelectedCase] = useState(null);
   const [updateMessage, setUpdateMessage] = useState('');
-  const [messageType, setMessageType] = useState('manual');
-  const [autoUpdateType, setAutoUpdateType] = useState('active');
   const [cases, setCases] = useState([]);
   const [filteredCases, setFilteredCases] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [casesLoading, setCasesLoading] = useState(false);
-  const [submissionStatus, setSubmissionStatus] = useState('');
   
   // Success Dialog State
   const [successDialog, setSuccessDialog] = useState({
@@ -61,16 +58,6 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
     message: '',
     type: 'success'
   });
-
-  // Auto update messages mapping
-  const autoUpdateMessages = {
-    active: "We have started investigating your case and are actively working on it.",
-    in_progress: "We're currently reviewing and verifying the details of your case.",
-    closed: "Your case has been closed. Thank you for using our service.",
-    rejected: "Your case submission has been rejected after review.",
-    investigating: "Your case is now under active investigation by our team.",
-    found: "Great news! The missing person in your case has been found."
-  };
 
   // Fetch cases when modal opens
   useEffect(() => {
@@ -93,15 +80,6 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
       setFilteredCases(filtered);
     }
   }, [searchTerm, cases]);
-
-  // Update message when auto type changes
-  useEffect(() => {
-    if (messageType === 'auto') {
-      setUpdateMessage(autoUpdateMessages[autoUpdateType] || '');
-    } else if (messageType === 'manual') {
-      setUpdateMessage('');
-    }
-  }, [messageType, autoUpdateType]);
 
   const fetchCases = async () => {
     setCasesLoading(true);
@@ -155,8 +133,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
     
     try {
       const updateData = {
-        message: updateMessage.trim(),
-        ...(submissionStatus && { submission_status: submissionStatus })
+        message: updateMessage.trim()
       };
 
       await API.cases.addCaseUpdate(selectedCase.id, updateData);
@@ -195,9 +172,6 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
     setShowUpdateForm(false);
     setSelectedCase(null);
     setUpdateMessage('');
-    setMessageType('manual');
-    setAutoUpdateType('active');
-    setSubmissionStatus('');
     setSearchTerm('');
     onClose();
   };
@@ -220,31 +194,29 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-          {/* Simple Header */}
-          <div className="bg-gradient-to-r from-findthem-teal to-findthem-darkGreen text-white p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-             
-                <h3 className="text-lg font-bold">Send Case Update</h3>
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="p-6 border-b bg-gray-50">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Send Case Update</h3>
               </div>
-              <button 
+              <button
                 onClick={handleClose}
-                className="text-white hover:text-gray-200 transition-colors p-1 hover:bg-white hover:bg-opacity-10 rounded-full"
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
               >
-                <X className="h-5 w-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="p-4 overflow-y-auto" style={{ height: 'calc(90vh - 140px)' }}>
+          <div className="p-6">
             {!showUpdateForm ? (
               /* Case Selection View */
               <div>
                 <div className="mb-4">
                   <h4 className="text-sm font-semibold text-gray-900 mb-1">Select Case</h4>
-                  <p className="text-xs text-gray-600">Choose the case you want to send an update for</p>
                 </div>
                 
                 {/* Search Bar */}
@@ -255,7 +227,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal transition-colors"
-                    placeholder="Search by case name, ID, or reporter..."
+                    placeholder="Search by case name, or reporter..."
                   />
                 </div>
 
@@ -263,7 +235,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {casesLoading ? (
                     <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-findthem-teal mx-auto mb-4"></div>
                       <p className="text-gray-600">Loading cases...</p>
                     </div>
                   ) : filteredCases.length === 0 ? (
@@ -279,7 +251,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                         className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-sm ${
                           selectedCase?.id === caseItem.id 
                             ? 'border-findthem-teal bg-findthem-light shadow-md' 
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            : 'border-gray-200 hover:border-findthem-teal bg-white'
                         }`}
                         onClick={() => handleCaseSelect(caseItem)}
                       >
@@ -304,21 +276,12 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                             <div className="w-12 h-12 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center shadow-sm" style={{display: 'none'}}>
                               <User className="h-6 w-6 text-white" />
                             </div>
-                            
-                            {selectedCase?.id === caseItem.id && (
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-findthem-teal rounded-full flex items-center justify-center shadow-sm">
-                                <CheckCircle className="h-3 w-3 text-white" />
-                              </div>
-                            )}
                           </div>
                           
                           {/* Case Details */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <h5 className="font-semibold text-sm text-gray-900 truncate">{caseItem.full_name}</h5>
-                              <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                                #{caseItem.id}
-                              </span>
                             </div>
                             
                             <div className="flex items-center space-x-2 mb-1">
@@ -345,8 +308,19 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
             ) : (
               /* Update Form View */
               <div>
+                {/* Back Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowUpdateForm(false)}
+                    className="flex items-center gap-2 text-findthem-teal hover:text-findthem-darkGreen transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm font-medium">Back to case selection</span>
+                  </button>
+                </div>
+
                 {/* Selected Case Summary */}
-                <div className="bg-gradient-to-r from-findthem-light to-findthem-light border border-findthem-teal rounded-lg p-4 mb-4">
+                <div className="bg-findthem-light border border-findthem-teal rounded-lg p-4 mb-6">
                   <div className="flex items-center space-x-3">
                     {selectedCase.photo ? (
                       <img
@@ -361,94 +335,13 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                     )}
                     <div>
                       <h4 className="text-lg font-bold text-gray-900">{selectedCase.full_name}</h4>
-                      <p className="text-findthem-darkGreen text-sm font-medium">Case #{selectedCase.id} • Reporter: {selectedCase.reporter}</p>
+                      <p className="text-findthem-darkGreen text-sm font-medium">Reporter: {selectedCase.reporter}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Update Form */}
-                <div className="space-y-4">
-                  {/* Message Type Selection */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      Choose Update Type
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
-                        messageType === 'manual' ? 'border-findthem-teal bg-findthem-light' : 'border-gray-200 hover:border-gray-300'
-                      }`}>
-                        <input
-                          type="radio"
-                          value="manual"
-                          checked={messageType === 'manual'}
-                          onChange={(e) => setMessageType(e.target.value)}
-                          className="sr-only"
-                        />
-                        <MessageSquare className="h-5 w-5 mr-2 text-findthem-teal" />
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Custom Message</span>
-                          <p className="text-xs text-gray-600">Write your own update</p>
-                        </div>
-                      </label>
-                      
-                      <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${
-                        messageType === 'auto' ? 'border-findthem-teal bg-findthem-light' : 'border-gray-200 hover:border-gray-300'
-                      }`}>
-                        <input
-                          type="radio"
-                          value="auto"
-                          checked={messageType === 'auto'}
-                          onChange={(e) => setMessageType(e.target.value)}
-                          className="sr-only"
-                        />
-                        <FileText className="h-5 w-5 mr-2 text-findthem-teal" />
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">Auto Messages</span>
-                          <p className="text-xs text-gray-600">Use pre-written messages</p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Template Selection */}
-                  {messageType === 'auto' && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2">
-                        Select Message
-                      </label>
-                      <select
-                        value={autoUpdateType}
-                        onChange={(e) => setAutoUpdateType(e.target.value)}
-                        className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                      >
-                        <option value="active">Case Active - Investigation Started</option>
-                        <option value="in_progress">In Progress - Under Review</option>
-                        <option value="investigating">Under Investigation</option>
-                        <option value="found">Person Found - Good News!</option>
-                        <option value="closed">Case Closed</option>
-                        <option value="rejected">Case Rejected</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Submission Status */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      Update Case Status (Optional)
-                    </label>
-                    <select
-                      value={submissionStatus}
-                      onChange={(e) => setSubmissionStatus(e.target.value)}
-                      className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                    >
-                      <option value="">Keep Current Status</option>
-                      <option value="active">Set to Active</option>
-                      <option value="in_progress">Set to In Progress</option>
-                      <option value="closed">Set to Closed</option>
-                      <option value="rejected">Set to Rejected</option>
-                    </select>
-                  </div>
-
+                <div>
                   {/* Message Textarea */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -459,16 +352,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                       onChange={(e) => setUpdateMessage(e.target.value)}
                       className="w-full h-32 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal resize-none"
                       placeholder="Enter your update message here..."
-                      disabled={messageType === 'auto'}
                     />
-                    <div className="flex justify-between items-center mt-1">
-                      <p className="text-xs text-gray-500">
-                        {updateMessage.length}/500 characters
-                      </p>
-                      {messageType === 'auto' && (
-                        <p className="text-xs text-findthem-teal font-medium">Using auto message</p>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -476,7 +360,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-t">
+          <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t">
             <button
               onClick={handleClose}
               className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
@@ -488,7 +372,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
               <button
                 onClick={handleContinue}
                 disabled={!selectedCase}
-                className="px-6 py-2 bg-gradient-to-r from-findthem-teal to-findthem-darkGreen text-white rounded-lg hover:from-findthem-darkGreen hover:to-findthem-teal disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium shadow-lg"
+                className="px-6 py-2 bg-findthem-teal text-white rounded-lg hover:bg-findthem-darkGreen disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium"
               >
                 Continue
               </button>
@@ -496,7 +380,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
               <button
                 onClick={handleSendUpdate}
                 disabled={loading || !updateMessage.trim()}
-                className="px-6 py-2 bg-gradient-to-r from-findthem-teal to-findthem-darkGreen text-white rounded-lg hover:from-findthem-darkGreen hover:to-findthem-teal disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium flex items-center space-x-2 shadow-lg"
+                className="px-6 py-2 bg-findthem-darkGreen text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium flex items-center space-x-2"
               >
                 {loading ? (
                   <>
@@ -504,10 +388,7 @@ const AddCaseUpdateModal = ({ isOpen, onClose, onUpdateSent }) => {
                     <span>Sending...</span>
                   </>
                 ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    <span>Send Update</span>
-                  </>
+                  <span>Send Update</span>
                 )}
               </button>
             )}

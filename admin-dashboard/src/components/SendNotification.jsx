@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, Search, Users, User, Shield, CheckCircle, AlertCircle } from 'lucide-react';
-import API from '../api'; // Make sure this path is correct
+import { X, Search, User, Shield, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import API from '../api';
 
 // Success Dialog Component
 const SuccessDialog = ({ isOpen, onClose, title, message, type = 'success' }) => {
@@ -42,8 +42,8 @@ const SuccessDialog = ({ isOpen, onClose, title, message, type = 'success' }) =>
 };
 
 const NotificationModal = ({ isOpen, onClose, onSend }) => {
+  const [showNotificationForm, setShowNotificationForm] = useState(false);
   const [message, setMessage] = useState('');
-  const [notificationType, setNotificationType] = useState('system');
   const [pushTitle, setPushTitle] = useState('FindThem');
   const [recipients, setRecipients] = useState('all');
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -86,12 +86,6 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
     setSearchLoading(true);
     try {
       const data = await API.users.fetchAll();
-      
-      // 🐛 DEBUG: Log the user data to see what we're getting
-      console.log('Users data:', data);
-      console.log('First user:', data[0]);
-      console.log('Profile photo of first user:', data[0]?.profile_photo);
-      
       setUsers(data);
       setFilteredUsers(data);
     } catch (error) {
@@ -126,6 +120,19 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
     }
   };
 
+  const handleContinue = () => {
+    if (recipients === 'specific' && selectedUsers.length === 0) {
+      setSuccessDialog({
+        isOpen: true,
+        title: 'No Recipients Selected',
+        message: 'Please select at least one user to continue.',
+        type: 'error'
+      });
+      return;
+    }
+    setShowNotificationForm(true);
+  };
+
   const handleSend = async () => {
     if (!message.trim()) {
       setSuccessDialog({
@@ -137,22 +144,12 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
       return;
     }
 
-    if (recipients === 'specific' && selectedUsers.length === 0) {
-      setSuccessDialog({
-        isOpen: true,
-        title: 'No Recipients Selected',
-        message: 'Please select at least one user to send the notification to.',
-        type: 'error'
-      });
-      return;
-    }
-
     setLoading(true);
     
     try {
       const payload = {
         message: message.trim(),
-        notification_type: notificationType,
+        notification_type: 'system',
         push_title: pushTitle.trim() || 'FindThem',
         receiver: recipients === 'all' ? 'all' : selectedUsers.map(u => u.id)
       };
@@ -164,8 +161,6 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
       let successMessage;
       if (recipients === 'all') {
         successMessage = `Notification sent successfully to all users! 🎉`;
-      } else if (recipients === 'staff') {
-        successMessage = `Notification sent successfully to all staff members! 👥`;
       } else {
         const count = selectedUsers.length;
         successMessage = `Notification sent successfully to ${count} user${count > 1 ? 's' : ''}! 📱`;
@@ -197,8 +192,8 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
   };
 
   const handleClose = () => {
+    setShowNotificationForm(false);
     setMessage('');
-    setNotificationType('system');
     setPushTitle('FindThem');
     setRecipients('all');
     setSelectedUsers([]);
@@ -220,218 +215,282 @@ const NotificationModal = ({ isOpen, onClose, onSend }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="flex justify-between items-center p-6 border-b">
-            <h3 className="text-xl font-semibold text-gray-900">Send Notification</h3>
-            <button 
-              onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
+          <div className="p-6 border-b bg-gray-50">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Send Notification</h3>
+              </div>
+              <button
+                onClick={handleClose}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
-          {/* Body */}
-          <div className="p-6 space-y-6 max-h-[calc(90vh-200px)] overflow-y-auto">
-            {/* Message */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Message *
-              </label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal resize-none"
-                rows="4"
-                placeholder="Enter notification message..."
-                required
-              />
-            </div>
+          {/* Main Content */}
+          <div className="p-6">
+            {!showNotificationForm ? (
+              /* Recipients Selection View */
+              <div>
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Select Recipients</h4>
+                </div>
+                
+                {/* Recipients Options */}
+                <div className="space-y-3 mb-6">
+                  <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${
+                    recipients === 'all' ? 'border-findthem-teal bg-findthem-light' : 'border-gray-200 hover:border-findthem-teal'
+                  }`}>
+                    <input
+                      type="radio"
+                      value="all"
+                      checked={recipients === 'all'}
+                      onChange={(e) => setRecipients(e.target.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-findthem-teal to-findthem-darkGreen rounded-full flex items-center justify-center mr-4">
+                        <User className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <span className="text-lg font-medium text-gray-900">All Users</span>
+                        <p className="text-sm text-gray-600">Send notification to everyone</p>
+                      </div>
+                    </div>
+                  </label>
+                  
+                  <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${
+                    recipients === 'specific' ? 'border-findthem-teal bg-findthem-light' : 'border-gray-200 hover:border-findthem-teal'
+                  }`}>
+                    <input
+                      type="radio"
+                      value="specific"
+                      checked={recipients === 'specific'}
+                      onChange={(e) => setRecipients(e.target.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-findthem-teal to-findthem-darkGreen rounded-full flex items-center justify-center mr-4">
+                        <Shield className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <span className="text-lg font-medium text-gray-900">Specific Users</span>
+                        <p className="text-sm text-gray-600">Choose individual users</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
 
-            {/* Push Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Push Notification Title
-              </label>
-              <input
-                type="text"
-                value={pushTitle}
-                onChange={(e) => setPushTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                placeholder="FindThem"
-              />
-            </div>
+                {/* User Selection - Only show when 'specific' is selected */}
+                {recipients === 'specific' && (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-gray-900">Select Users</h4>
+                      <div className="text-sm text-gray-500">
+                        {selectedUsers.length} of {filteredUsers.length} selected
+                      </div>
+                    </div>
 
-            {/* Notification Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notification Type
-              </label>
-              <select
-                value={notificationType}
-                onChange={(e) => setNotificationType(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              >
-                <option value="system">System Notification</option>
-                <option value="missing_person">Missing Person</option>
-                <option value="report">Report</option>
-                <option value="location_request">Location Request</option>
-                <option value="location_response">Location Response</option>
-                <option value="case_update">Case Update</option>
-                <option value="location_alert">Location Alert</option>
-              </select>
-            </div>
+                    {/* Search */}
+                    <div className="relative mb-4">
+                      <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                        placeholder="Search users..."
+                      />
+                    </div>
 
-            {/* Recipients */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Send to
-              </label>
-              <select
-                value={recipients}
-                onChange={(e) => setRecipients(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              >
-                <option value="all">All Users</option>
-                <option value="specific">Specific Users</option>
-              </select>
-            </div>
+                    {/* Select All Button */}
+                    <div className="flex justify-between items-center mb-3">
+                      <button
+                        onClick={handleSelectAll}
+                        className="text-findthem-teal hover:text-findthem-darkGreen text-sm font-medium"
+                      >
+                        {selectedUsers.length === filteredUsers.length ? 'Deselect All' : 'Select All'}
+                      </button>
+                      <span className="text-sm text-gray-500">
+                        {filteredUsers.length} users found
+                      </span>
+                    </div>
 
-            {/* User Selection - Only show when 'specific' is selected */}
-            {recipients === 'specific' && (
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-900">Select Users</h4>
-                  <div className="text-sm text-gray-500">
-                    {selectedUsers.length} of {filteredUsers.length} selected
+                    {/* Users List */}
+                    <div className="max-h-60 overflow-y-auto border border-gray-200 rounded">
+                      {searchLoading ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-findthem-teal mx-auto mb-4"></div>
+                          Loading users...
+                        </div>
+                      ) : filteredUsers.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          No users found
+                        </div>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center p-3 hover:bg-findthem-light border-b border-gray-100 last:border-b-0"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedUsers.find(u => u.id === user.id) !== undefined}
+                              onChange={() => handleUserToggle(user)}
+                              className="mr-3 h-4 w-4 text-findthem-teal focus:ring-findthem-teal border-gray-300 rounded"
+                            />
+                            <div className="flex items-center flex-1">
+                              <div className="flex-shrink-0 mr-3">
+                                {user.profile_photo ? (
+                                  <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                                    <img
+                                      src={user.profile_photo}
+                                      alt={user.username}
+                                      className="h-full w-full object-cover"
+                                      onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                      }}
+                                    />
+                                    <div className="h-full w-full bg-gray-300 rounded-full flex items-center justify-center" style={{display: 'none'}}>
+                                      <User className="h-4 w-4 text-gray-500" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
+                                    <User className="h-4 w-4 text-gray-500" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {user.first_name && user.last_name 
+                                      ? `${user.first_name} ${user.last_name}` 
+                                      : user.username}
+                                  </p>
+                                  {user.role === 'admin' && (
+                                    <Shield className="h-3 w-3 text-findthem-teal ml-1" />
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500 truncate">
+                                  @{user.username} • {user.email}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Notification Form View */
+              <div>
+                {/* Back Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowNotificationForm(false)}
+                    className="flex items-center gap-2 text-findthem-teal hover:text-findthem-darkGreen transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="text-sm font-medium">Back to recipient selection</span>
+                  </button>
+                </div>
+
+                {/* Recipients Summary */}
+                <div className="bg-findthem-light border border-findthem-teal rounded-lg p-4 mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-findthem-teal to-findthem-darkGreen rounded-full flex items-center justify-center">
+                      {recipients === 'all' ? (
+                        <User className="h-6 w-6 text-white" />
+                      ) : (
+                        <Shield className="h-6 w-6 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">
+                        {recipients === 'all' ? 'All Users' : `${selectedUsers.length} Selected Users`}
+                      </h4>
+                      <p className="text-findthem-darkGreen text-sm font-medium">
+                        {recipients === 'all' ? 'Broadcasting to everyone' : 'Sending to specific users'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Search */}
-                <div className="relative mb-4">
-                  <Search className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                    placeholder="Search users..."
-                  />
-                </div>
+                {/* Notification Form */}
+                <div className="space-y-6">
+                  {/* Notification Title */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Notification Title
+                    </label>
+                    <input
+                      type="text"
+                      value={pushTitle}
+                      onChange={(e) => setPushTitle(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                      placeholder="FindThem"
+                    />
+                  </div>
 
-                {/* Select All Button */}
-                <div className="flex justify-between items-center mb-3">
-                  <button
-                    onClick={handleSelectAll}
-                    className="text-findthem-teal hover:text-findthem-darkGreen text-sm font-medium"
-                  >
-                    {selectedUsers.length === filteredUsers.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                  <span className="text-sm text-gray-500">
-                    {filteredUsers.length} users found
-                  </span>
-                </div>
-
-                {/* Users List */}
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded">
-                  {searchLoading ? (
-                    <div className="p-4 text-center text-gray-500">
-                      Loading users...
-                    </div>
-                  ) : filteredUsers.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      No users found
-                    </div>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center p-3 hover:bg-findthem-light border-b border-gray-100 last:border-b-0"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedUsers.find(u => u.id === user.id) !== undefined}
-                          onChange={() => handleUserToggle(user)}
-                          className="mr-3 h-4 w-4 text-findthem-teal focus:ring-findthem-teal border-gray-300 rounded"
-                        />
-                        <div className="flex items-center flex-1">
-                          <div className="flex-shrink-0 mr-3">
-                            {user.profile_photo ? (
-                              <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                                <img
-                                  src={user.profile_photo}
-                                  alt={user.username}
-                                  className="h-full w-full object-cover"
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                  }}
-                                />
-                                <div className="h-full w-full bg-gray-300 rounded-full flex items-center justify-center" style={{display: 'none'}}>
-                                  <User className="h-4 w-4 text-gray-500" />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                <User className="h-4 w-4 text-gray-500" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {user.first_name && user.last_name 
-                                  ? `${user.first_name} ${user.last_name}` 
-                                  : user.username}
-                              </p>
-                              {user.role === 'admin' && (
-                                <Shield className="h-3 w-3 text-findthem-teal ml-1" />
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 truncate">
-                              @{user.username} • {user.email}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                  {/* Message */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal resize-none"
+                      rows="4"
+                      placeholder="Enter notification message..."
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex justify-between items-center p-6 border-t bg-gray-50">
-            <div className="text-sm text-gray-600">
-              Sending to: <span className="font-medium">{getRecipientCount()}</span>
-            </div>
-            <div className="flex space-x-3">
+          <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t">
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            >
+              Cancel
+            </button>
+            
+            {!showNotificationForm ? (
               <button
-                onClick={handleClose}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={handleContinue}
+                className="px-6 py-2 bg-findthem-teal text-white rounded-lg hover:bg-findthem-darkGreen transition-all text-sm font-medium"
               >
-                Cancel
+                Continue
               </button>
+            ) : (
               <button
                 onClick={handleSend}
                 disabled={loading || !message.trim()}
-                className="px-6 py-2 bg-findthem-darkGreen text-white rounded-lg hover:bg-findthem-teal disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                className="px-6 py-2 bg-findthem-darkGreen text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm font-medium flex items-center space-x-2"
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending...
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Sending...</span>
                   </>
                 ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send Notification
-                  </>
+                  <span>Send Notification</span>
                 )}
               </button>
-            </div>
+            )}
           </div>
         </div>
       </div>

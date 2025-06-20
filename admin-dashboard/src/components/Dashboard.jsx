@@ -1,6 +1,7 @@
+// src/components/Dashboard.jsx
 import React from 'react';
 import Navbar from './navbar';
-import Sidebar from './sidebar';
+import Sidebar from './Sidebar';
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
@@ -22,11 +23,17 @@ const Dashboard = ({ onLogout }) => {
                     <Sidebar isSidebarOpen={isSidebarOpen} />
                 </div>
 
-                {/* Main content area */}
+                {/* Main content area - Updated to match new sidebar widths */}
                 <div
-                    className={`${isSidebarOpen ? 'ml-80' : 'ml-20'} p-6 transition-all duration-300 w-full overflow-y-auto`}
+                    className={`${
+                        isSidebarOpen ? 'ml-64' : 'ml-20'
+                    } p-6 transition-all duration-300 w-full overflow-y-auto bg-gray-50`}
                 >
-                    <Outlet /> {/* Your content here */}
+                    <div className={`max-w-none transition-all duration-300 ${
+                        isSidebarOpen ? 'px-4' : 'px-2'
+                    }`}>
+                        <Outlet /> {/* Your page content here */}
+                    </div>
                 </div>
             </div>
         </div>

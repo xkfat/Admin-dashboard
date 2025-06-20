@@ -1,4 +1,4 @@
-// src/components/AdminNotifications.jsx - Simplified Component
+// src/components/AdminNotifications.jsx - Direct Delete Version
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import API from '../api';
 
-// Custom Dialog Component
+// Custom Dialog Component (simplified - only for mark all read and clear all)
 const CustomDialog = ({ 
   isOpen, 
   onClose, 
@@ -110,7 +110,7 @@ const AdminNotifications = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [notificationsPerPage] = useState(10);
 
-  // Dialog state
+  // Dialog state (only for mark all read and clear all)
   const [customDialog, setCustomDialog] = useState({
     isOpen: false,
     type: 'info',
@@ -174,32 +174,23 @@ const AdminNotifications = () => {
       ));
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      showDialog('error', 'Error', 'Failed to mark notification as read.');
+      // Show error message without dialog - just console log or toast
     }
   };
 
-  // Delete notification
+  // Delete notification directly (no dialog)
   const deleteNotification = async (notificationId) => {
-    showDialog(
-      'warning',
-      'Delete Notification',
-      'Are you sure you want to delete this notification? This action cannot be undone.',
-      async () => {
-        try {
-          await API.notifications.delete(notificationId);
-          
-          // Update local state
-          setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-          
-          showDialog('success', 'Deleted!', 'Notification deleted successfully.');
-        } catch (error) {
-          console.error('Error deleting notification:', error);
-          showDialog('error', 'Error', 'Failed to delete notification.');
-        }
-        setCustomDialog(prev => ({ ...prev, isOpen: false }));
-      },
-      true
-    );
+    try {
+      await API.notifications.delete(notificationId);
+      
+      // Update local state - remove the notification immediately
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+      
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      // Show error message without dialog - just console log or toast
+      // You could add a toast notification here if you have a toast system
+    }
   };
 
   // Handle notification click
@@ -315,7 +306,7 @@ const AdminNotifications = () => {
     return pages;
   };
 
-  // Mark all as read
+  // Mark all as read (still uses dialog for confirmation)
   const markAllAsRead = async () => {
     showDialog(
       'warning',
@@ -339,7 +330,7 @@ const AdminNotifications = () => {
     );
   };
 
-  // Clear all notifications
+  // Clear all notifications (still uses dialog for confirmation)
   const clearAll = async () => {
     showDialog(
       'warning',
@@ -401,49 +392,36 @@ const AdminNotifications = () => {
   return (
     <div className="p-6">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Notifications</h1>
-              <p className="text-gray-600 mt-1">{notifications.length} total notifications</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={markAllAsRead}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                disabled={notifications.length === 0 || notifications.every(n => n.is_read)}
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Mark All Read
-              </button>
-              <button
-                onClick={clearAll}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center"
-                disabled={notifications.length === 0}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear All
-              </button>
-              <button
-                onClick={fetchNotifications}
-                className="bg-findthem-button text-white px-4 py-2 rounded-lg hover:bg-findthem-bg transition-colors flex items-center"
-                disabled={loading}
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                {loading ? 'Loading...' : 'Refresh'}
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Notifications List */}
         <div className="bg-white rounded-lg shadow-sm border">
+          {/* Enhanced Notifications Header with Action Buttons */}
           <div className="p-6 border-b bg-gradient-to-br from-findthem-button via-findthem-button to-findthem-bg text-white">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Notifications</h2>
-              <div className="text-sm">
-                {notifications.filter(n => !n.is_read).length} unread
+              <div>
+                <h1 className="text-2xl font-bold">Notifications</h1>
+                <div className="text-sm mt-1">
+                  {notifications.filter(n => !n.is_read).length} unread 
+                </div>
+              </div>
+              
+              {/* Action Buttons in Notifications Header */}
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={markAllAsRead}
+                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center border border-white/30"
+                  disabled={notifications.length === 0 || notifications.every(n => n.is_read)}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark All Read
+                </button>
+                <button
+                  onClick={clearAll}
+                  className="bg-red-500/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center border border-red-400/50"
+                  disabled={notifications.length === 0}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear All
+                </button>
               </div>
             </div>
           </div>
@@ -506,12 +484,13 @@ const AdminNotifications = () => {
                         </button>
                       )}
                       
+                      {/* Direct delete button - no dialog */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteNotification(notification.id);
                         }}
-                        className="text-red-600 hover:text-red-800 p-1 rounded transition-colors"
+                        className="text-red-600 hover:text-red-800 p-1 rounded transition-colors hover:bg-red-50"
                         title="Delete notification"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -574,7 +553,7 @@ const AdminNotifications = () => {
           )}
         </div>
 
-        {/* Custom Dialog */}
+        {/* Custom Dialog (only for mark all read and clear all) */}
         <CustomDialog
           isOpen={customDialog.isOpen}
           onClose={() => setCustomDialog(prev => ({ ...prev, isOpen: false }))}

@@ -840,8 +840,7 @@ export default function Map() {
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Interactive Map View</h1>
-            <p className="text-gray-600 mt-1">Visualize missing person cases with photo markers (Click to view case details)</p>
+            <h1 className="text-2xl font-bold text-gray-900"> Map View of Cases</h1>
           </div>
           <div className="flex space-x-3">
             <button 

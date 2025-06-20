@@ -238,17 +238,6 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
     }
   };
 
-  // Center map on Nouakchott
-  const centerOnNouakchott = () => {
-    const nouakchottCenter = { lat: 18.0735, lng: -15.9582 };
-    setSelectedLocation(nouakchottCenter);
-    if (map && marker) {
-      map.setCenter(nouakchottCenter);
-      map.setZoom(13);
-      marker.setPosition(nouakchottCenter);
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -258,10 +247,8 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
         <div className="p-6 border-b bg-gray-50">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900">Choose Location on Map</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Search for a place, click on the map, or drag the marker to select the last seen location
-              </p>
+              <h3 className="text-xl font-semibold text-gray-900">Choose Last Seen Location on Map</h3>
+              
             </div>
             <button
               onClick={onClose}
@@ -281,7 +268,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             <input
               id="map-search-input"
               type="text"
-              placeholder="Search for places in Mauritania (e.g., Nouakchott Central Market, Tevragh Zeina...)"
+              placeholder="Search places/areas/zones"
               className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={searchValue}
               onChange={handleSearchChange}
@@ -374,8 +361,81 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             </button>
           </div>
         </div>
-        
-      
+      </div>
+    </div>
+  );
+};
+
+// Mini Map Component
+const MiniMap = ({ latitude, longitude, onMapClick }) => {
+  const mapRef = useState(null);
+
+  useEffect(() => {
+    // Only initialize if we have coordinates
+    if (!latitude || !longitude) return;
+
+    const initMiniMap = () => {
+      if (!window.google || !window.google.maps) return;
+
+      const mapElement = document.getElementById('mini-map');
+      if (!mapElement) return;
+
+      const map = new window.google.maps.Map(mapElement, {
+        center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+        zoom: 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControl: false,
+        disableDefaultUI: true,
+        gestureHandling: 'none'
+      });
+
+      // Add marker
+      new window.google.maps.Marker({
+        position: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
+        map: map,
+        title: 'Selected location'
+      });
+    };
+
+    // Load Google Maps if not already loaded
+    if (window.google && window.google.maps) {
+      initMiniMap();
+    } else {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+      script.async = true;
+      script.onload = initMiniMap;
+      document.head.appendChild(script);
+    }
+  }, [latitude, longitude]);
+
+  if (!latitude || !longitude) {
+    return (
+      <div 
+        onClick={onMapClick}
+        className="w-full h-32 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-findthem-bg transition-colors"
+      >
+        <div className="text-center text-gray-500">
+          <MapPin className="w-8 h-8 mx-auto mb-2" />
+          <p className="text-sm">Click to select location on map</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div 
+        id="mini-map" 
+        className="w-full h-32 rounded-xl border border-gray-300 cursor-pointer"
+        onClick={onMapClick}
+      ></div>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+          Click to change location
+        </div>
       </div>
     </div>
   );
@@ -394,13 +454,15 @@ export default function AddCase() {
     last_name: '',
     age: '',
     gender: '',
-    photo: null,
-    contact_phone: '',
     last_seen_date: '',
     last_seen_location: '',
-    description: '',
     latitude: '',
-    longitude: ''
+    longitude: '',
+    photo: null,
+    contact_phone: '',
+    description: '',
+    submission_status: 'active',
+    status: 'missing'
   });
 
   // Photo preview state
@@ -445,11 +507,11 @@ export default function AddCase() {
 
   // Validate form data
   const validateForm = () => {
-    const required = ['first_name', 'last_name', 'age', 'gender', 'photo', 'last_seen_date', 'last_seen_location'];
+    const required = ['first_name', 'last_name', 'age', 'gender', 'last_seen_date', 'last_seen_location', 'photo'];
     
     for (let field of required) {
       if (!formData[field]) {
-        setError(`${field.replace('_', ' ').toUpperCase()} is required`);
+        setError(`${field.replace('_', ' ').replace(/^\w/, c => c.toUpperCase())} is required`);
         return false;
       }
     }
@@ -507,6 +569,8 @@ export default function AddCase() {
         last_seen_date: formData.last_seen_date,
         last_seen_location: formData.last_seen_location.trim(),
         description: formData.description.trim() || '',
+        submission_status: formData.submission_status,
+        status: formData.status
       };
 
       // Add coordinates if available
@@ -538,18 +602,23 @@ export default function AddCase() {
 
   return (
     <div className="p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 bg-findthem-button text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            <CircleArrowLeft />
-          </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        {/* Header Section */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="text-slate-600 hover:text-slate-800 transition-all duration-200 hover:translate-x-1 group"
+            >
+              <CircleArrowLeft className="h-6 w-6 group-hover:-translate-x-1 transition-transform duration-200" />
+            </button>
 
-          <h2 className="text-2xl font-bold text-gray-900 text-center flex-1">
-            Add New Missing Person Case
-          </h2>
+            <h2 className="text-2xl font-bold text-gray-900 text-center flex-1">
+              Add Missing Person Case
+            </h2>
+            
+            <div className="w-6"></div> {/* Spacer for centering */}
+          </div>
         </div>
 
         {/* Success Message */}
@@ -579,7 +648,7 @@ export default function AddCase() {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 required
                 disabled={loading}
               />
@@ -595,7 +664,7 @@ export default function AddCase() {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 required
                 disabled={loading}
               />
@@ -613,7 +682,7 @@ export default function AddCase() {
                 onChange={handleInputChange}
                 min="0"
                 max="150"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 required
                 disabled={loading}
               />
@@ -628,7 +697,7 @@ export default function AddCase() {
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 required
                 disabled={loading}
               >
@@ -636,47 +705,6 @@ export default function AddCase() {
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
-            </div>
-
-            {/* Photo */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Photo *
-              </label>
-              <input
-                type="file"
-                name="photo"
-                onChange={handleFileChange}
-                accept="image/*"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-                disabled={loading}
-              />
-              {photoPreview && (
-                <div className="mt-2">
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="w-32 h-32 object-cover rounded-lg border"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Contact Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Contact Phone
-              </label>
-              <input
-                type="tel"
-                name="contact_phone"
-                value={formData.contact_phone}
-                onChange={handleInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., +222 12345678"
-                disabled={loading}
-              />
             </div>
 
             {/* Last Seen Date */}
@@ -690,7 +718,7 @@ export default function AddCase() {
                 value={formData.last_seen_date}
                 onChange={handleInputChange}
                 max={today}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 required
                 disabled={loading}
               />
@@ -706,62 +734,81 @@ export default function AddCase() {
                 name="last_seen_location"
                 value={formData.last_seen_location}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Nouakchott Central Market, Tevragh Zeina"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                placeholder="e.g., Nouakchott-Nord"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Location Coordinates with Map Picker */}
+            {/* Map Location Selector */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location Coordinates (Optional)
+                Select Last Seen Location from Map
               </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="number"
-                  name="latitude"
-                  value={formData.latitude}
-                  onChange={handleInputChange}
-                  step="any"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Latitude"
-                  disabled={loading}
-                />
-                <input
-                  type="number"
-                  name="longitude"
-                  value={formData.longitude}
-                  onChange={handleInputChange}
-                  step="any"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Longitude"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log('Opening map modal');
-                    setShowMapModal(true);
-                  }}
-                  className="bg-findthem-bg text-white p-3 rounded-lg hover:bg-findthem-button transition-colors flex items-center justify-center"
-                  disabled={loading}
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  Choose from Map
-                </button>
-              </div>
-              {formData.latitude && formData.longitude && (
-                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="text-sm text-green-800">
-                    ✓ Location selected: {parseFloat(formData.latitude).toFixed(6)}, {parseFloat(formData.longitude).toFixed(6)}
-                  </div>
+              <MiniMap 
+                latitude={formData.latitude}
+                longitude={formData.longitude}
+                onMapClick={() => setShowMapModal(true)}
+              />
+            </div>
+
+            {/* Photo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Photo *
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    name="photo"
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                    id="photo-upload"
+                    required
+                    disabled={loading}
+                  />
+                  <label
+                    htmlFor="photo-upload"
+                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer flex items-center justify-center bg-gray-50 hover:bg-gray-100"
+                  >
+                    <svg className="w-6 h-6 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    {formData.photo ? 'Change Photo' : 'Choose Photo'}
+                  </label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {formData.photo ? formData.photo.name : 'No photo chosen'}
+                  </p>
                 </div>
-              )}
+                {photoPreview && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={photoPreview}
+                      alt="Preview"
+                      className="w-24 h-24 object-cover rounded-lg border"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Contact Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Phone Number
+              </label>
+              <input
+                type="tel"
+                name="contact_phone"
+                value={formData.contact_phone}
+                onChange={handleInputChange}
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                placeholder="e.g., +222 12345678"
+                disabled={loading}
+              />
             </div>
 
             {/* Description */}
@@ -774,10 +821,48 @@ export default function AddCase() {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="4"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 placeholder="Additional details about the missing person (clothing, distinctive features, circumstances, etc.)"
                 disabled={loading}
               />
+            </div>
+
+            {/* Submission Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Submission Status
+              </label>
+              <select
+                name="submission_status"
+                value={formData.submission_status}
+                onChange={handleInputChange}
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                disabled={loading}
+              >
+                <option value="active">Active</option>
+                <option value="in_progress">In Progress</option>
+                <option value="closed">Closed</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Case Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Case Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                disabled={loading}
+              >
+                <option value="missing">Missing</option>
+                <option value="investigating">Investigating</option>
+                <option value="found">Found</option>
+                <option value="closed">Closed</option>
+              </select>
             </div>
 
             {/* Submit Buttons */}

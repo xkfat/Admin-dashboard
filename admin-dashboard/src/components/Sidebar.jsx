@@ -4,20 +4,20 @@ import { Bot, Files, Map, Bell, Users, House} from 'lucide-react';
 
 export default function Sidebar({ isSidebarOpen }) {
   return (
-    <aside className={`h-full bg-findthem-light ${isSidebarOpen ? "w-80" : "w-24"} overflow-hidden transition-all duration-300`}>
+    <aside className={`h-full bg-findthem-light ${isSidebarOpen ? "w-64" : "w-20"} overflow-hidden transition-all duration-300`}>
       
       {isSidebarOpen && (
-        <div className="flex p-8 mt-6 gap-4">
+        <div className="flex p-6 mt-6 gap-4">
           <div className="border rounded-md p-2 bg-findthem-button">
             <img src="hat.png" alt="Logo" />
           </div>
-          <p className="text-3xl text-findthem-button font-semibold relative top-1">
+          <p className="text-2xl text-findthem-button font-semibold relative top-1">
             FindThem
           </p>
         </div>
       )}
 
-      <div className={`${isSidebarOpen ? "p-4 mt-0" : "p-p-2 mt-12"}`}>
+      <div className={`${isSidebarOpen ? "p-4 mt-0" : "p-3 mt-12"}`}>
         {/* Navigation items */}
         <div className="space-y-4">
           
@@ -27,18 +27,18 @@ export default function Sidebar({ isSidebarOpen }) {
             className={({ isActive }) => 
               `flex gap-4 rounded-xl transition-all duration-200 ${
                 isSidebarOpen 
-                  ? "p-6 py-4" 
-                  : "p-3 justify-center"
+                  ? "p-5 py-3" 
+                  : "p-3 justify-center mx-auto w-14 h-14 items-center"
               } ${isActive ? "bg-findthem-bg" : "hover:bg-gray-100"}`
             }
           >
             {({ isActive }) => (
               <>
-                <div className="rounded-md p-2 bg-findthem-button">
-                  <House size={24} color="white" />  
+                <div className="rounded-md p-2 bg-findthem-button flex items-center justify-center">
+                  <House size={20} color="white" />  
                 </div>
                 {isSidebarOpen && (
-                  <span className={`text-xl font-semibold self-center ${
+                  <span className={`text-lg font-semibold self-center ${
                     isActive ? "text-white" : "text-findthem-button"
                   }`}>
                     Dashboard
@@ -54,18 +54,18 @@ export default function Sidebar({ isSidebarOpen }) {
             className={({ isActive }) => 
               `flex gap-4 rounded-xl transition-all duration-200 ${
                 isSidebarOpen 
-                  ? "p-6 py-4" 
-                  : "p-3 justify-center"
+                  ? "p-5 py-3" 
+                  : "p-3 justify-center mx-auto w-14 h-14 items-center"
               } ${isActive ? "bg-findthem-bg" : "hover:bg-gray-100"}`
             }
           >
             {({ isActive }) => (
               <>
-                <div className="border rounded-md p-2 bg-findthem-button">
-                  <Users size={24} color="white" />  
+                <div className="border rounded-md p-2 bg-findthem-button flex items-center justify-center">
+                  <Users size={20} color="white" />  
                 </div>
                 {isSidebarOpen && (
-                  <span className={`text-xl font-semibold self-center ${
+                  <span className={`text-lg font-semibold self-center ${
                     isActive ? "text-white" : "text-findthem-button"
                   }`}>
                     Cases
@@ -81,19 +81,18 @@ export default function Sidebar({ isSidebarOpen }) {
             className={({ isActive }) => 
               `flex gap-4 rounded-xl transition-all duration-200 ${
                 isSidebarOpen 
-                  ? "p-6 py-4" 
-                  : "p-3 justify-center"
+                  ? "p-5 py-3" 
+                  : "p-3 justify-center mx-auto w-14 h-14 items-center"
               } ${isActive ? "bg-findthem-bg" : "hover:bg-gray-100"}`
             }
           >
             {({ isActive }) => (
               <>
-                <div className="border rounded-md p-2 bg-findthem-button">
-                    <Files size={24} color="white" />            
-
+                <div className="border rounded-md p-2 bg-findthem-button flex items-center justify-center">
+                    <Files size={20} color="white" />            
                 </div>
                 {isSidebarOpen && (
-                  <span className={`text-xl font-semibold self-center ${
+                  <span className={`text-lg font-semibold self-center ${
                     isActive ? "text-white" : "text-findthem-button"
                   }`}>
                     Reports
@@ -109,18 +108,18 @@ export default function Sidebar({ isSidebarOpen }) {
             className={({ isActive }) => 
               `flex gap-4 rounded-xl transition-all duration-200 ${
                 isSidebarOpen 
-                  ? "p-6 py-4" 
-                  : "p-3 justify-center"
+                  ? "p-5 py-3" 
+                  : "p-3 justify-center mx-auto w-14 h-14 items-center"
               } ${isActive ? "bg-findthem-bg" : "hover:bg-gray-100"}`
             }
           >
             {({ isActive }) => (
               <>
-                <div className="border rounded-md p-2 bg-findthem-button">
-                  <Map size={24} color="white" /> 
+                <div className="border rounded-md p-2 bg-findthem-button flex items-center justify-center">
+                  <Map size={20} color="white" /> 
                 </div>
                 {isSidebarOpen && (
-                  <span className={`text-xl font-semibold self-center ${
+                  <span className={`text-lg font-semibold self-center ${
                     isActive ? "text-white" : "text-findthem-button"
                   }`}>
                     Map view
@@ -136,18 +135,18 @@ export default function Sidebar({ isSidebarOpen }) {
             className={({ isActive }) => 
               `flex gap-4 rounded-xl transition-all duration-200 ${
                 isSidebarOpen 
-                  ? "p-6 py-4" 
-                  : "p-3 justify-center"
+                  ? "p-5 py-3" 
+                  : "p-3 justify-center mx-auto w-14 h-14 items-center"
               } ${isActive ? "bg-findthem-bg" : "hover:bg-gray-100"}`
             }
           >
             {({ isActive }) => (
               <>
            <div className="border rounded-md p-2 bg-findthem-button flex items-center justify-center">
-  <Bot size={24} color="white" />            
+  <Bot size={20} color="white" />            
                 </div>
                 {isSidebarOpen && (
-                  <span className={`text-xl font-semibold self-center ${
+                  <span className={`text-lg font-semibold self-center ${
                     isActive ? "text-white" : "text-findthem-button"
                   }`}>
 AI Matches                  </span>

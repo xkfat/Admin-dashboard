@@ -396,9 +396,9 @@ const NotificationIcon = () => {
         )}
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu - BIGGER SIZE */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 flex flex-col max-h-[500px]">
+        <div className="absolute right-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl border border-gray-200 z-50 flex flex-col max-h-[600px]">
           {/* Header */}
           <div className="bg-findthem-bg text-white p-4 rounded-t-lg flex-shrink-0">
             <div className="flex items-center justify-between">
@@ -450,7 +450,7 @@ const NotificationIcon = () => {
                 <p className="text-sm">No notifications yet</p>
               </div>
             ) : (
-              notifications.slice(0, 10).map((notification) => ( // Show max 10 notifications
+              notifications.slice(0, 3).map((notification) => ( // Show only 3 notifications
                 <div
                   key={notification.id}
                   className={`group p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${

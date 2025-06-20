@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Users, Bot, BellRing } from "lucide-react";
 import API from '../api'; // Adjust the import path according to your project structure
 import NotificationModal from '../components/SendNotification'; // Import the modal component
-import AddCaseUpdateModal from '../components/CaseUpdateModal'; // Import the new modal component
+import AddCaseUpdateModal from '../components/AddCaseUpdate'; // Import the new modal component
 
 export default function Home() {
   const navigate = useNavigate();
@@ -373,9 +374,8 @@ export default function Home() {
               </p>
               <p className="text-xs text-gray-500 mt-1">Submission status: Active</p>
             </div>
-            <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-            </svg>
+          
+<Users className="h-8 w-8 text-gray-400" />
           </div>
         </div>
         
@@ -432,9 +432,8 @@ export default function Home() {
                 {stats.aiPendingReviews > 0 ? 'Awaiting review' : 'No pending matches'}
               </p>
             </div>
-            <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM4.343 15.657l9.9-9.9a2.121 2.121 0 013 3l-9.9 9.9a2.121 2.121 0 01-3-3z"></path>
-            </svg>
+          <Bot className="h-8 w-8 text-gray-400" />
+
           </div>
         </div>
       </div>
@@ -487,9 +486,8 @@ export default function Home() {
   >
     <div className="flex items-center justify-between mb-4">
       <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-        </svg>
+        <BellRing className="h-5 w-5" />
+
       </div>
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
@@ -538,9 +536,7 @@ export default function Home() {
                   <p className="text-xs text-gray-500">{formatRelativeTime(activity.timestamp)} • {activity.subtitle}</p>
                 </div>
                 <div className="flex-shrink-0">
-                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {getActivityIcon(activity.icon)}
-                  </svg>
+                
                 </div>
               </div>
             ))}
