@@ -35,10 +35,10 @@ const CaseDialog = ({
       case 'warning':
         return {
           icon: AlertTriangle,
-          iconColor: 'text-yellow-600',
-          iconBg: 'bg-yellow-100',
-          borderColor: 'border-yellow-200',
-          buttonColor: 'bg-yellow-600 hover:bg-yellow-700'
+          iconColor: 'text-red-600', // Changed from yellow to red
+          iconBg: 'bg-red-100', // Changed from yellow to red
+          borderColor: 'border-red-200', // Changed from yellow to red
+          buttonColor: 'bg-red-600 hover:bg-red-700' // Changed from yellow to red
         };
       case 'info':
         return {
@@ -122,8 +122,7 @@ const CaseDialog = ({
           </div>
         </div>
         
-        {/* Decorative bottom border */}
-        <div className="h-1 bg-gradient-to-r from-findthem-light via-findthem-button to-findthem-bg rounded-b-2xl"></div>
+        {/* Removed the decorative bottom border */}
       </div>
     </div>
   );

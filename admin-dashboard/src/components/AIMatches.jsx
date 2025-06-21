@@ -265,7 +265,7 @@ export default function AIMatches() {
     setSelectedMatches([]);
   };
 
-  // Apply filters
+  // FIXED: Apply filters function with proper date handling
   const applyFilters = () => {
     let filtered = [...allMatches];
 
@@ -296,13 +296,67 @@ export default function AIMatches() {
       });
     }
 
+    // FIXED: Date filtering with proper date handling - PAST DATES ONLY
     if (filters.dateStart) {
       filtered = filtered.filter(match => {
-        const matchDate = new Date(match.processing_date);
-        const filterDate = new Date(filters.dateStart);
-        return matchDate >= filterDate;
+        try {
+          // Handle different possible date formats and field names
+          const matchDateStr = match.processing_date || match.created_at || match.date_created || match.timestamp;
+          if (!matchDateStr) {
+            console.warn('No date field found for match:', match.id);
+            return false;
+          }
+          
+          // Parse the match date (handle both ISO strings and date objects)
+          const matchDate = new Date(matchDateStr);
+          const filterDate = new Date(filters.dateStart);
+          const today = new Date();
+          
+          // Ensure both dates are valid
+          if (isNaN(matchDate.getTime()) || isNaN(filterDate.getTime())) {
+            console.warn('Invalid date found:', { 
+              matchId: match.id, 
+              matchDate: matchDateStr, 
+              filterDate: filters.dateStart 
+            });
+            return false;
+          }
+          
+          // Set time to start of day for all dates to compare only the date part
+          const matchDateOnly = new Date(matchDate.getFullYear(), matchDate.getMonth(), matchDate.getDate());
+          const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate());
+          const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          
+          // FIXED: Only include matches that:
+          // 1. Are from the selected date onwards (>= filterDate)
+          // 2. Are not in the future (>= today)
+          // 3. Are between filterDate and today (inclusive)
+          return matchDateOnly >= filterDateOnly && matchDateOnly <= todayOnly;
+        } catch (error) {
+          console.error('Error parsing dates for filtering:', error, {
+            matchId: match.id,
+            dateFields: {
+              processing_date: match.processing_date,
+              created_at: match.created_at,
+              date_created: match.date_created
+            }
+          });
+          return false;
+        }
       });
     }
+
+    console.log('🔍 Filter Results:', {
+      originalCount: allMatches.length,
+      filteredCount: filtered.length,
+      appliedFilters: Object.entries(filters).filter(([key, value]) => value !== ''),
+      sampleMatch: allMatches[0] ? {
+        id: allMatches[0].id,
+        processing_date: allMatches[0].processing_date,
+        created_at: allMatches[0].created_at,
+        date_created: allMatches[0].date_created
+      } : null
+    });
 
     setFilteredMatches(filtered);
     setTotalCount(filtered.length);
@@ -780,15 +834,9 @@ export default function AIMatches() {
               value={filters.dateStart}
               onChange={(e) => handleFilterChange('dateStart', e.target.value)}
               placeholder="From date"
+              max={new Date().toISOString().split('T')[0]} // Prevent future dates
             />
             
-            <button
-              className="bg-findthem-darkGreen text-white p-3 rounded-lg hover:bg-findthem-teal disabled:opacity-50 transition-colors w-full md:w-auto"
-              onClick={applyFilters}
-            >
-              Apply Filters
-            </button>
-
             <button
               className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400 w-full md:w-auto transition-colors"
               onClick={clearAllFilters}
@@ -934,9 +982,6 @@ export default function AIMatches() {
                             >
                               {match.original_case_details?.full_name || 'Unknown'}
                             </button>
-                            <div className="text-sm text-blue-600">
-                              ID: {match.original_case} • {match.original_case_details?.status || 'Unknown'}
-                            </div>
                           </div>
                         </div>
                       </td>
@@ -957,9 +1002,6 @@ export default function AIMatches() {
                             >
                               {match.matched_case_details?.full_name || 'Unknown'}
                             </button>
-                            <div className="text-sm text-green-600">
-                              ID: {match.matched_case} • {match.matched_case_details?.status || 'Unknown'}
-                            </div>
                           </div>
                         </div>
                       </td>

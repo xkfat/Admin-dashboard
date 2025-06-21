@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle, AlertTriangle, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import API from '../api'; // Adjust the import path according to your project structure
+import API from '../api';
 
-// Reusable Dialog Component
+// Reusable Dialog Component - No decorative line
 const CustomDialog = ({ 
   isOpen, 
   onClose, 
   title, 
   message, 
-  type = 'info', // success, error, warning, info, confirm
-  onConfirm = null, // For confirmation dialogs
+  type = 'info',
+  onConfirm = null,
   confirmText = 'OK',
   cancelText = 'Cancel',
   showCancel = false
@@ -116,9 +116,6 @@ const CustomDialog = ({
             </button>
           </div>
         </div>
-        
-        {/* Decorative bottom border */}
-        <div className="h-1 bg-gradient-to-r from-findthem-light via-findthem-button to-findthem-bg rounded-b-2xl"></div>
       </div>
     </div>
   );
@@ -136,7 +133,7 @@ export default function Reports() {
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [reportsPerPage] = useState(5); // Fixed at 5 reports per page
+  const [reportsPerPage] = useState(5);
   
   // Dialog states
   const [showNoReportsDialog, setShowNoReportsDialog] = useState(false);
@@ -200,67 +197,26 @@ export default function Reports() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-    setSelectedReports([]); // Clear selections when page changes
+    setSelectedReports([]);
   }, [filteredReports.length]);
 
   // Handle page changes
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
-      setSelectedReports([]); // Clear selections when page changes
-      // Scroll to top of reports table
+      setSelectedReports([]);
       document.getElementById('reports-table')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  // Generate page numbers for pagination
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Show smart pagination
-      if (currentPage <= 3) {
-        // Show first 5 pages
-        for (let i = 1; i <= 5; i++) {
-          pages.push(i);
-        }
-        if (totalPages > 5) {
-          pages.push('...');
-          pages.push(totalPages);
-        }
-      } else if (currentPage >= totalPages - 2) {
-        // Show last 5 pages
-        pages.push(1);
-        if (totalPages > 5) {
-          pages.push('...');
-        }
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        // Show pages around current page
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
+  // Get today's date in YYYY-MM-DD format for max date
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
   };
 
   // Read URL parameters and set initial filters
   useEffect(() => {
-    console.log('📖 Reading URL parameters for reports...');
+    console.log('Reading URL parameters for reports...');
     const urlFilters = {
       search: searchParams.get('search') || '',
       status: searchParams.get('status') || '',
@@ -268,12 +224,12 @@ export default function Reports() {
       caseFilter: searchParams.get('case_id') || ''
     };
 
-    console.log('🔗 URL Filters found:', urlFilters);
+    console.log('URL Filters found:', urlFilters);
 
     const hasUrlFilters = Object.values(urlFilters).some(value => value !== '');
     
     if (hasUrlFilters) {
-      console.log('✅ Applying URL filters:', urlFilters);
+      console.log('Applying URL filters:', urlFilters);
       setFilters(urlFilters);
     }
   }, [searchParams]);
@@ -354,7 +310,7 @@ export default function Reports() {
     setStats(stats);
   };
 
-  // Handle filter changes
+  // Handle filter changes - Auto apply filters
   const handleFilterChange = (key, value) => {
     console.log(`Filter changed: ${key} = ${value}`);
     setFilters(prev => ({
@@ -365,7 +321,7 @@ export default function Reports() {
 
   // Handle stat card clicks to filter reports
   const handleStatsCardClick = (statusFilter) => {
-    console.log(`📊 Stats card clicked for status: ${statusFilter}`);
+    console.log(`Stats card clicked for status: ${statusFilter}`);
     
     const newFilters = {
       search: '',
@@ -400,10 +356,14 @@ export default function Reports() {
       filtered = filtered.filter(report => report.report_status === filters.status);
     }
 
+    // Fixed date filtering
     if (filters.dateStart) {
       filtered = filtered.filter(report => {
         const reportDate = new Date(report.date_submitted);
         const filterDate = new Date(filters.dateStart);
+        // Reset time to start of day for accurate comparison
+        reportDate.setHours(0, 0, 0, 0);
+        filterDate.setHours(0, 0, 0, 0);
         return reportDate >= filterDate;
       });
     }
@@ -431,7 +391,7 @@ export default function Reports() {
 
   // Clear all filters
   const clearAllFilters = () => {
-    console.log('🧹 Clearing all filters');
+    console.log('Clearing all filters');
     const emptyFilters = {
       search: '',
       status: '',
@@ -460,7 +420,6 @@ export default function Reports() {
     });
   };
 
-  // UPDATED: Replace alert with custom dialog
   const handleBulkStatusChange = async (newStatus) => {
     if (selectedReports.length === 0) {
       showCustomDialog(
@@ -471,19 +430,17 @@ export default function Reports() {
       return;
     }
 
-    // Show confirmation dialog instead of confirm()
     showCustomDialog(
       'confirm',
       'Confirm Bulk Update',
       `Are you sure you want to update ${selectedReports.length} selected reports to "${newStatus}" status?`,
       async () => {
-        closeCustomDialog(); // Close confirmation dialog
+        closeCustomDialog();
         
         try {
           setLoading(true);
           await API.reports.bulkUpdateStatus(selectedReports, newStatus);
           
-          // Update local state
           const updatedReports = reports.map(report => {
             if (selectedReports.includes(report.id)) {
               return { ...report, report_status: newStatus };
@@ -495,15 +452,13 @@ export default function Reports() {
           calculateStats(updatedReports);
           setSelectedReports([]);
           
-          // Show success dialog instead of alert
           showCustomDialog(
             'success',
-            'Update Successful! 🎉',
+            'Update Successful',
             `Successfully updated ${selectedReports.length} reports to "${newStatus}" status.`
           );
         } catch (err) {
           console.error('Error updating reports:', err);
-          // Show error dialog instead of alert
           showCustomDialog(
             'error',
             'Update Failed',
@@ -513,18 +468,16 @@ export default function Reports() {
           setLoading(false);
         }
       },
-      true, // showCancel
-      'Update', // confirmText
-      'Cancel' // cancelText
+      true,
+      'Update',
+      'Cancel'
     );
   };
 
-  // UPDATED: Replace alert with custom dialog
   const handleSingleStatusChange = async (reportId, newStatus) => {
     try {
       await API.reports.updateStatus(reportId, newStatus);
       
-      // Update local state
       const updatedReports = reports.map(report => {
         if (report.id === reportId) {
           return { ...report, report_status: newStatus };
@@ -535,15 +488,13 @@ export default function Reports() {
       setReports(updatedReports);
       calculateStats(updatedReports);
       
-      // Show success dialog instead of alert
       showCustomDialog(
         'success',
-        'Status Updated! ✅',
+        'Status Updated',
         `Report #${reportId} has been successfully updated to "${newStatus}" status.`
       );
     } catch (err) {
       console.error('Error updating report:', err);
-      // Show error dialog instead of alert
       showCustomDialog(
         'error',
         'Update Failed',
@@ -593,7 +544,7 @@ export default function Reports() {
     return note.length > maxLength ? `${note.substring(0, maxLength)}...` : note;
   };
 
-  // Dialog component for viewing full note
+  // Note Dialog with FindThem colors
   const NoteDialog = () => {
     if (!showNoteDialog || !selectedReport) return null;
 
@@ -608,9 +559,7 @@ export default function Reports() {
               onClick={() => setShowNoteDialog(false)}
               className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+              <X className="w-6 h-6" />
             </button>
           </div>
           
@@ -623,7 +572,7 @@ export default function Reports() {
           <div className="flex justify-end mt-6">
             <button
               onClick={() => setShowNoteDialog(false)}
-              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-findthem-teal text-white py-2 px-4 rounded-lg hover:bg-findthem-darkGreen transition-colors"
             >
               Close
             </button>
@@ -633,7 +582,7 @@ export default function Reports() {
     );
   };
 
-  // Dialog component for no reports message
+  // Simple No Reports Dialog
   const NoReportsDialog = () => {
     if (!showNoReportsDialog) return null;
 
@@ -689,7 +638,6 @@ export default function Reports() {
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* New Reports */}
           <div 
             className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-blue-400 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('new')}
@@ -699,7 +647,6 @@ export default function Reports() {
             <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
           </div>
           
-          {/* Verified Reports */}
           <div 
             className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-green-400 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('verified')}
@@ -709,7 +656,6 @@ export default function Reports() {
             <div className="text-xs text-gray-500 mt-1">Confirmed as valid</div>
           </div>
           
-          {/* Unverified Reports */}
           <div 
             className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-yellow-400 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('unverified')}
@@ -719,7 +665,6 @@ export default function Reports() {
             <div className="text-xs text-gray-500 mt-1">Need verification</div>
           </div>
           
-          {/* False Reports */}
           <div 
             className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-red-400 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('false')}
@@ -730,13 +675,13 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Filters - Auto-applying */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="mb-4">
             <input
               type="text"
               className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              placeholder="🔍 Search by reporter, missing person, or note content..."
+              placeholder="Search by missing person, reporter, or report ID"
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />
@@ -760,15 +705,9 @@ export default function Reports() {
               className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
               value={filters.dateStart}
               onChange={(e) => handleFilterChange('dateStart', e.target.value)}
+              max={getTodayDate()}
               placeholder="From date"
             />
-            
-            <button
-              className="bg-findthem-darkGreen text-white p-3 rounded-lg hover:bg-findthem-teal disabled:opacity-50 transition-colors w-full md:w-auto"
-              onClick={applyFilters}
-            >
-              Apply Filters
-            </button>
 
             <button
               className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400 w-full md:w-auto transition-colors"
@@ -779,15 +718,13 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Reports Table */}
+        {/* Reports Table - No ID column */}
         <div id="reports-table" className="bg-white rounded-lg shadow-sm border">
           <div className="p-6 border-b bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-xl font-bold">Reports Management</div>
-              
               </div>
-            
             </div>
           </div>
 
@@ -823,7 +760,7 @@ export default function Reports() {
             </div>
           )}
 
-          {/* Table */}
+          {/* Table - No ID column, changed Actions to Details */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 sticky top-0">
@@ -836,13 +773,12 @@ export default function Reports() {
                       className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
                     />
                   </th>
-                  <th className="p-4 text-left">ID</th>
                   <th className="p-4 text-left">Reporter</th>
                   <th className="p-4 text-left">Missing Person</th>
                   <th className="p-4 text-left">Report Status</th>
                   <th className="p-4 text-left">Note Preview</th>
                   <th className="p-4 text-left">Date Submitted</th>
-                  <th className="p-4 text-left">Actions</th>
+                  <th className="p-4 text-left">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -856,7 +792,6 @@ export default function Reports() {
                         className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
                       />
                     </td>
-                    <td className="p-4 font-medium">{report.id}</td>
                     <td className="p-4">{report.reporter || 'Anonymous'}</td>
                     <td className="p-4">
                       <button
@@ -897,17 +832,16 @@ export default function Reports() {
               <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
-              <p className="text-lg font-medium">No reports found</p>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-lg font-medium">
                 {filters.status ? 
                   `No ${filters.status} reports found.` : 
-                  'No reports found matching your criteria.'
+                  'No reports found.'
                 }
               </p>
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Simple Pagination - Only Previous/Next */}
           {totalPages > 1 && (
             <div className="p-4 border-t bg-gray-50">
               <div className="flex items-center justify-between">
@@ -916,77 +850,39 @@ export default function Reports() {
                   Showing {startIndex + 1} to {Math.min(endIndex, filteredReports.length)} of {filteredReports.length} reports
                 </div>
 
-                {/* Pagination Controls */}
-                <div className="flex items-center space-x-2">
+                {/* Simple Navigation Controls */}
+                <div className="flex items-center space-x-4">
                   {/* Previous Button */}
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Previous
                   </button>
 
-                  {/* Page Numbers */}
-                  <div className="flex items-center space-x-1">
-                    {getPageNumbers().map((page, index) => (
-                      <button
-                        key={index}
-                        onClick={() => typeof page === 'number' && handlePageChange(page)}
-                        disabled={page === '...' || page === currentPage}
-                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                          page === currentPage
-                            ? 'bg-findthem-teal text-white'
-                            : page === '...'
-                            ? 'text-gray-400 cursor-default'
-                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Current Page Info */}
+                  <span className="text-sm text-gray-600 font-medium">
+                    Page {currentPage} of {totalPages}
+                  </span>
 
                   {/* Next Button */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     Next
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </button>
                 </div>
               </div>
-
-              {/* Quick Jump (for large datasets) */}
-              {totalPages > 10 && (
-                <div className="mt-4 flex items-center justify-center">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-gray-600">Jump to page:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max={totalPages}
-                      value={currentPage}
-                      onChange={(e) => {
-                        const page = parseInt(e.target.value);
-                        if (page >= 1 && page <= totalPages) {
-                          handlePageChange(page);
-                        }
-                      }}
-                      className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                    />
-                    <span className="text-gray-600">of {totalPages}</span>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
 
-        {/* Custom Dialog - Main Alert Replacement */}
+        {/* Custom Dialog */}
         <CustomDialog
           isOpen={customDialog.isOpen}
           onClose={closeCustomDialog}
