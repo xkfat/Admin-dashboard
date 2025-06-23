@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, X, AlertTriangle, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, X, AlertTriangle, Trash2, Filter, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import API from '../api';
 
 // Custom Dialog Component matching Reports style
@@ -126,6 +126,9 @@ export default function AIMatches() {
   const [selectedMatches, setSelectedMatches] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   
+  // Filter visibility state
+  const [showFilters, setShowFilters] = useState(false);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [matchesPerPage] = useState(5);
@@ -205,6 +208,8 @@ export default function AIMatches() {
     if (hasUrlFilters) {
       console.log('✅ Applying URL filters:', urlFilters);
       setFilters(urlFilters);
+      // Auto-expand filters if there are active filters from URL
+      setShowFilters(true);
     }
   }, [searchParams]);
 
@@ -223,6 +228,11 @@ export default function AIMatches() {
   useEffect(() => {
     applyFilters();
   }, [allMatches, filters]);
+
+  // Check if any filters are active (excluding search)
+  const hasActiveFilters = () => {
+    return filters.status || filters.confidence || filters.dateStart;
+  };
 
   const fetchData = async () => {
     try {
@@ -263,6 +273,11 @@ export default function AIMatches() {
 
     setFilters(newFilters);
     setSelectedMatches([]);
+  };
+
+  // Get today's date in YYYY-MM-DD format for max date
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
   };
 
   // FIXED: Apply filters function with proper date handling
@@ -400,46 +415,6 @@ export default function AIMatches() {
       setSelectedMatches([]);
       document.getElementById('ai-matches-table')?.scrollIntoView({ behavior: 'smooth' });
     }
-  };
-
-  // Generate page numbers for pagination
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 5; i++) {
-          pages.push(i);
-        }
-        if (totalPages > 5) {
-          pages.push('...');
-          pages.push(totalPages);
-        }
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        if (totalPages > 5) {
-          pages.push('...');
-        }
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
   };
 
   // Select/deselect matches
@@ -792,58 +767,88 @@ export default function AIMatches() {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Filters - UPDATED WITH COLLAPSIBLE FILTERS */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="mb-4">
-            <input
-              type="text"
-              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              placeholder="🔍 Search by name, match ID, or case ID..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-4 justify-end items-center">
-            <select
-              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="rejected">Rejected</option>
-              <option value="under_review">Under Review</option>
-            </select>
-
-            <select
-              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.confidence}
-              onChange={(e) => handleFilterChange('confidence', e.target.value)}
-            >
-              <option value="">All Confidence</option>
-              <option value="high">High (90%+)</option>
-              <option value="medium">Medium (45-89%)</option>
-              <option value="low">Low (&lt;45%)</option>
-            </select>
-
-            <input
-              type="date"
-              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.dateStart}
-              onChange={(e) => handleFilterChange('dateStart', e.target.value)}
-              placeholder="From date"
-              max={new Date().toISOString().split('T')[0]} // Prevent future dates
-            />
-            
+          {/* Search Bar with Filter Button */}
+          <div className="flex gap-4 mb-4">
+           <div className="flex-1">
+  <div className="relative">
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+    <input
+      type="text"
+      className="w-full pl-10 pr-4 py-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+      placeholder="Search by name, match ID, or case ID..."
+      value={filters.search}
+      onChange={(e) => handleFilterChange('search', e.target.value)}
+    />
+  </div>
+</div>
             <button
-              className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400 w-full md:w-auto transition-colors"
-              onClick={clearAllFilters}
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-6 py-4 border rounded-lg font-medium transition-all ${
+                showFilters 
+                  ? 'bg-findthem-teal text-white border-findthem-teal' 
+                  : hasActiveFilters() 
+                    ? 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100' 
+                    : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+              }`}
             >
-              Clear All
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+              {hasActiveFilters() && (
+                <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                  {Object.values(filters).filter(v => v && v !== filters.search).length}
+                </span>
+              )}
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
           </div>
+
+          {/* Collapsible Filters */}
+          {showFilters && (
+            <div className="border-t pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex flex-col md:flex-row gap-4 justify-end items-center">
+                <select
+                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                >
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="under_review">Under Review</option>
+                </select>
+
+                <select
+                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.confidence}
+                  onChange={(e) => handleFilterChange('confidence', e.target.value)}
+                >
+                  <option value="">All Confidence</option>
+                  <option value="high">High (90%+)</option>
+                  <option value="medium">Medium (45-89%)</option>
+                  <option value="low">Low (&lt;45%)</option>
+                </select>
+
+                <input
+                  type="date"
+                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.dateStart}
+                  onChange={(e) => handleFilterChange('dateStart', e.target.value)}
+                  placeholder="From date"
+                  max={getTodayDate()} // Prevent future dates
+                />
+                
+                <button
+                  className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 w-full md:w-auto transition-colors"
+                  onClick={clearAllFilters}
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* AI Matches Table */}
@@ -1188,7 +1193,7 @@ export default function AIMatches() {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Simple Pagination - Only Previous/Next */}
           {totalPages > 1 && (
             <div className="p-4 border-t bg-gray-50">
               <div className="flex items-center justify-between">
@@ -1197,72 +1202,34 @@ export default function AIMatches() {
                   Showing {startIndex + 1} to {Math.min(endIndex, filteredMatches.length)} of {filteredMatches.length} matches
                 </div>
 
-                {/* Pagination Controls */}
-                <div className="flex items-center space-x-2">
+                {/* Simple Navigation Controls */}
+                <div className="flex items-center space-x-4">
                   {/* Previous Button */}
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Previous
                   </button>
 
-                  {/* Page Numbers */}
-                  <div className="flex items-center space-x-1">
-                    {getPageNumbers().map((page, index) => (
-                      <button
-                        key={index}
-                        onClick={() => typeof page === 'number' && handlePageChange(page)}
-                        disabled={page === '...' || page === currentPage}
-                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                          page === currentPage
-                            ? 'bg-findthem-teal text-white'
-                            : page === '...'
-                            ? 'text-gray-400 cursor-default'
-                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Current Page Info */}
+                  <span className="text-sm text-gray-600 font-medium">
+                    Page {currentPage} of {totalPages}
+                  </span>
 
                   {/* Next Button */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     Next
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </button>
                 </div>
               </div>
-
-              {/* Quick Jump (for large datasets) */}
-              {totalPages > 10 && (
-                <div className="mt-4 flex items-center justify-center">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-gray-600">Jump to page:</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max={totalPages}
-                      value={currentPage}
-                      onChange={(e) => {
-                        const page = parseInt(e.target.value);
-                        if (page >= 1 && page <= totalPages) {
-                          handlePageChange(page);
-                        }
-                      }}
-                      className="w-16 px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                    />
-                    <span className="text-gray-600">of {totalPages}</span>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1307,11 +1274,9 @@ export default function AIMatches() {
                 </button>
                 
                 <h3 className="text-xl font-bold text-white mb-2">
-                  AI Match Details
+                  The Match Details
                 </h3>
-                <p className="text-findthem-light">
-                  Match ID: #{viewMatchDialog.matchData.id}
-                </p>
+                
               </div>
               
               {/* Content */}

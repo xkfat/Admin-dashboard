@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, MapPin, Eye } from 'lucide-react';
+import { Search, X, MapPin, Eye, RotateCcw, Users, CheckCircle, Clock, AlertCircle, Calendar } from 'lucide-react';
 import API from '../api';
 
 export default function Map() {
@@ -12,12 +12,7 @@ export default function Map() {
   const mapInitializedRef = useRef(false);
   const scriptLoadedRef = useRef(false);
   
-  const [filters, setFilters] = useState({
-    status: '',
-    timeRange: '',
-    ageMin: '',
-    ageMax: ''
-  });
+  const [activeFilter, setActiveFilter] = useState('');
   
   const [stats, setStats] = useState({
     totalCases: 0,
@@ -39,20 +34,12 @@ export default function Map() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Debug: Log all cases and their statuses
-  useEffect(() => {
-    console.log('📊 Current cases state:', cases);
-    console.log('📊 Cases by status:', {
-      missing: cases.filter(c => c.status === 'missing').length,
-      found: cases.filter(c => c.status === 'found').length,
-      under_investigation: cases.filter(c => c.status === 'under_investigation').length,
-      total: cases.length
-    });
-  }, [cases]);
+  // Hover tooltip state
+  const [hoveredCase, setHoveredCase] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   // Get marker color based on case status
   const getMarkerColor = useCallback((status) => {
-    console.log('🎨 Getting color for status:', status);
     switch (status) {
       case 'missing':
         return '#ef4444'; // red
@@ -61,20 +48,18 @@ export default function Map() {
       case 'under_investigation':
         return '#f59e0b'; // yellow/orange
       default:
-        console.warn('⚠️ Unknown status:', status);
         return '#6b7280'; // gray for unknown status
     }
   }, []);
 
-  // Create custom photo marker with improved styling and forced visibility
+  // Create custom photo marker without status dots
   const createPhotoMarker = useCallback((caseItem, position) => {
     return new Promise((resolve) => {
-      console.log(`🎨 Creating marker for ${caseItem.first_name} ${caseItem.last_name} with status: ${caseItem.status}`);
+      console.log(`🎨 Creating clean marker for ${caseItem.first_name} ${caseItem.last_name}`);
       
       const markerColor = getMarkerColor(caseItem.status);
-      console.log(`🎨 Marker color for ${caseItem.status}: ${markerColor}`);
       
-      // Create the main container with forced visibility
+      // Create the main container
       const markerContainer = document.createElement('div');
       markerContainer.className = `custom-photo-marker marker-${caseItem.status}`;
       markerContainer.setAttribute('data-case-id', caseItem.id);
@@ -92,7 +77,7 @@ export default function Map() {
         pointer-events: auto !important;
       `;
 
-      // Create the pin background (teardrop shape) with status-specific styling
+      // Create the pin background (teardrop shape) - clean version
       const pinBackground = document.createElement('div');
       pinBackground.className = 'pin-background';
       pinBackground.style.cssText = `
@@ -104,17 +89,11 @@ export default function Map() {
         transform: rotate(-45deg);
         top: 0;
         left: 0;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         border: 3px solid white;
         display: block !important;
         visibility: visible !important;
       `;
-
-      // Add special styling for non-missing cases to make them more visible
-      if (caseItem.status !== 'missing') {
-        pinBackground.style.boxShadow = `0 6px 16px rgba(0,0,0,0.5), 0 0 0 2px ${markerColor}`;
-        pinBackground.style.border = '4px solid white';
-      }
 
       // Create the photo container
       const photoContainer = document.createElement('div');
@@ -129,7 +108,7 @@ export default function Map() {
         left: 7px;
         transform: rotate(45deg);
         border: 2px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         z-index: 1001;
         display: block !important;
         visibility: visible !important;
@@ -152,60 +131,15 @@ export default function Map() {
         photoImg.src = '/default-avatar.png';
       };
 
-      // Create status indicator dot with enhanced visibility
-      const statusDot = document.createElement('div');
-      statusDot.className = `status-indicator status-${caseItem.status}`;
-      statusDot.style.cssText = `
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        background: ${markerColor} !important;
-        border: 3px solid white;
-        border-radius: 50%;
-        top: -3px;
-        right: 1px;
-        transform: rotate(45deg);
-        box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-        z-index: 1002;
-        display: block !important;
-        visibility: visible !important;
-      `;
-
-      // Add status-specific enhancements
-      if (caseItem.status === 'missing') {
-        // Remove animation for missing cases
-        // statusDot.style.animation = 'pulse 2s infinite';
-      } else if (caseItem.status === 'found') {
-        // Make found cases more prominent
-        statusDot.style.boxShadow = `0 3px 6px rgba(0,0,0,0.4), 0 0 0 2px ${markerColor}`;
-        statusDot.innerHTML = '✓';
-        statusDot.style.color = 'white';
-        statusDot.style.fontSize = '10px';
-        statusDot.style.display = 'flex';
-        statusDot.style.alignItems = 'center';
-        statusDot.style.justifyContent = 'center';
-        statusDot.style.transform = 'rotate(45deg) scale(1.1)';
-      } else if (caseItem.status === 'under_investigation') {
-        // Make investigating cases more prominent
-        statusDot.style.boxShadow = `0 3px 6px rgba(0,0,0,0.4), 0 0 0 2px ${markerColor}`;
-        statusDot.innerHTML = '?';
-        statusDot.style.color = 'white';
-        statusDot.style.fontSize = '12px';
-        statusDot.style.fontWeight = 'bold';
-        statusDot.style.display = 'flex';
-        statusDot.style.alignItems = 'center';
-        statusDot.style.justifyContent = 'center';
-        statusDot.style.transform = 'rotate(45deg) scale(1.1)';
-      }
-
-      // Add CSS styles without animations
-      if (!document.querySelector('#marker-animations')) {
+      // Add CSS styles for clean markers
+      if (!document.querySelector('#clean-marker-styles')) {
         const style = document.createElement('style');
-        style.id = 'marker-animations';
+        style.id = 'clean-marker-styles';
         style.textContent = `
           .custom-photo-marker:hover .pin-background {
             transform: rotate(-45deg) scale(1.1) !important;
             transition: transform 0.2s ease;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4) !important;
           }
           .custom-photo-marker:hover .photo-container {
             transform: rotate(45deg) scale(1.05) !important;
@@ -229,49 +163,43 @@ export default function Map() {
         document.head.appendChild(style);
       }
 
-      // Assemble the marker
+      // Assemble the marker (no status dot)
       photoContainer.appendChild(photoImg);
       markerContainer.appendChild(pinBackground);
       markerContainer.appendChild(photoContainer);
-      markerContainer.appendChild(statusDot);
 
       // Add click event to navigate to case detail
       markerContainer.addEventListener('click', (e) => {
         e.stopPropagation();
-        console.log('🖱️ Photo marker clicked:', caseItem.first_name, caseItem.last_name, `(${caseItem.status})`);
-        
-        // Set selected case for info panel
-        setSelectedCase(caseItem);
-        
-        // Navigate to case detail
+        console.log('🖱️ Photo marker clicked:', caseItem.first_name, caseItem.last_name);
         navigate(`/cases/${caseItem.id}`);
       });
 
-      // Add hover effects with enhanced visibility
-      markerContainer.addEventListener('mouseenter', () => {
+      // Add hover effects for tooltip
+      markerContainer.addEventListener('mouseenter', (e) => {
+        const rect = markerContainer.getBoundingClientRect();
+        setTooltipPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10
+        });
+        setHoveredCase(caseItem);
+        
+        // Visual hover effect
         markerContainer.style.zIndex = '2000';
-        markerContainer.style.transform = 'translate(-50%, -100%) scale(1.15)';
+        markerContainer.style.transform = 'translate(-50%, -100%) scale(1.1)';
         markerContainer.style.transition = 'transform 0.2s ease';
-        markerContainer.style.filter = 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))';
       });
 
       markerContainer.addEventListener('mouseleave', () => {
+        setHoveredCase(null);
         markerContainer.style.zIndex = caseItem.status === 'missing' ? '1002' : '1001';
         markerContainer.style.transform = 'translate(-50%, -100%) scale(1)';
-        markerContainer.style.filter = 'none';
       });
 
-      // Force final visibility
-      setTimeout(() => {
-        markerContainer.style.display = 'block';
-        markerContainer.style.visibility = 'visible';
-        markerContainer.style.opacity = '1';
-      }, 0);
-
-      console.log(`✅ Marker element created for ${caseItem.status} case: ${caseItem.full_name}`);
+      console.log(`✅ Clean marker created for: ${caseItem.full_name}`);
       resolve(markerContainer);
     });
-  }, [getMarkerColor, navigate, setSelectedCase]);
+  }, [getMarkerColor, navigate]);
 
   // Safe cleanup function
   const cleanupMarkers = useCallback(() => {
@@ -281,12 +209,7 @@ export default function Map() {
           if (marker && typeof marker.setMap === 'function') {
             marker.setMap(null);
           } else if (marker && typeof marker.onRemove === 'function') {
-            // For custom overlay markers
             marker.onRemove();
-          }
-          // Clean up event listeners
-          if (marker._clickListener && window.google?.maps?.event) {
-            window.google.maps.event.removeListener(marker._clickListener);
           }
         } catch (e) {
           console.warn('Error cleaning up marker:', e);
@@ -296,17 +219,9 @@ export default function Map() {
     markersRef.current = [];
   }, []);
 
-  // Add markers to map with custom photo design
+  // Add markers to map
   const addMarkersToMap = useCallback(async (casesData) => {
-    console.log('🏷️ Starting to add custom photo markers to map...');
-    console.log('📊 Cases data for markers:', casesData);
-    
-    // Debug: Log the breakdown by status
-    const statusBreakdown = casesData.reduce((acc, caseItem) => {
-      acc[caseItem.status] = (acc[caseItem.status] || 0) + 1;
-      return acc;
-    }, {});
-    console.log('📊 Cases breakdown by status:', statusBreakdown);
+    console.log('🏷️ Starting to add clean photo markers to map...');
     
     if (!mapInstanceRef.current || !window.google?.maps || !componentMountedRef.current) {
       console.log('❌ Cannot add markers - missing requirements');
@@ -317,15 +232,9 @@ export default function Map() {
     cleanupMarkers();
 
     let markersCreated = 0;
-    let markersSkipped = 0;
-    const markersByStatus = { missing: 0, found: 0, under_investigation: 0 };
 
     for (const caseItem of casesData) {
-      console.log(`🔍 Processing case: ${caseItem.first_name} ${caseItem.last_name} (Status: ${caseItem.status})`);
-
       if (!caseItem.latitude || !caseItem.longitude || !componentMountedRef.current) {
-        console.log(`⚠️ Skipping case ${caseItem.id}: missing coordinates`);
-        markersSkipped++;
         continue;
       }
 
@@ -335,38 +244,20 @@ export default function Map() {
           lng: parseFloat(caseItem.longitude) 
         };
 
-        console.log(`📍 Creating photo marker for ${caseItem.status} case at:`, position);
-
-        // Create custom photo marker element
         const markerElement = await createPhotoMarker(caseItem, position);
-
-        // Force marker visibility with explicit styles
-        markerElement.style.display = 'block';
-        markerElement.style.visibility = 'visible';
-        markerElement.style.opacity = '1';
-
-        // Use AdvancedMarkerElement if available, otherwise fallback
         let marker;
         
         if (window.google.maps.marker?.AdvancedMarkerElement) {
-          console.log(`🆕 Using AdvancedMarkerElement for ${caseItem.status} marker`);
           marker = new window.google.maps.marker.AdvancedMarkerElement({
             map: mapInstanceRef.current,
             position: position,
             content: markerElement,
-            title: `${caseItem.first_name} ${caseItem.last_name} - ${caseItem.status}`,
-            zIndex: caseItem.status === 'missing' ? 1002 : 1001, // Higher z-index for missing cases
+            title: `${caseItem.first_name} ${caseItem.last_name}`,
+            zIndex: caseItem.status === 'missing' ? 1002 : 1001,
             gmpClickable: true
           });
-          
-          // Force marker to be visible
-          marker.content.style.display = 'block';
-          marker.content.style.visibility = 'visible';
-          
         } else {
-          console.log(`🔄 Using Overlay for ${caseItem.status} marker (fallback)`);
-          
-          // Enhanced PhotoMarkerOverlay class
+          // Fallback overlay implementation
           class PhotoMarkerOverlay extends window.google.maps.OverlayView {
             constructor(position, content, map, caseData) {
               super();
@@ -379,45 +270,24 @@ export default function Map() {
 
             onAdd() {
               this.div = document.createElement('div');
-              this.div.style.cssText = `
-                position: absolute;
-                pointer-events: auto;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                z-index: ${this.caseData.status === 'missing' ? '1002' : '1001'};
-              `;
+              this.div.style.position = 'absolute';
               this.div.appendChild(this.content);
-
-              // Force content visibility
-              this.content.style.display = 'block';
-              this.content.style.visibility = 'visible';
-              this.content.style.opacity = '1';
-
               const panes = this.getPanes();
               if (panes && panes.overlayMouseTarget) {
                 panes.overlayMouseTarget.appendChild(this.div);
-                console.log(`✅ Overlay marker added to DOM for ${this.caseData.status} case`);
-              } else {
-                console.error('❌ Could not find overlay panes');
               }
             }
 
             draw() {
               if (!this.div) return;
-              
               const overlayProjection = this.getProjection();
               if (!overlayProjection) return;
-              
               const point = overlayProjection.fromLatLngToDivPixel(
                 new window.google.maps.LatLng(this.position.lat, this.position.lng)
               );
-
               if (point) {
                 this.div.style.left = point.x + 'px';
                 this.div.style.top = point.y + 'px';
-                this.div.style.display = 'block';
-                this.div.style.visibility = 'visible';
               }
             }
 
@@ -427,51 +297,24 @@ export default function Map() {
                 this.div = null;
               }
             }
-
-            setMap(map) {
-              super.setMap(map);
-            }
           }
-
           marker = new PhotoMarkerOverlay(position, markerElement, mapInstanceRef.current, caseItem);
         }
-
-        console.log(`✅ ${caseItem.status.toUpperCase()} marker created for ${caseItem.first_name} ${caseItem.last_name}`);
 
         if (componentMountedRef.current && marker) {
           markersRef.current.push(marker);
           markersCreated++;
-          markersByStatus[caseItem.status] = (markersByStatus[caseItem.status] || 0) + 1;
         }
 
       } catch (error) {
-        console.error(`❌ Error creating photo marker for case ${caseItem.id}:`, error);
-        markersSkipped++;
+        console.error(`❌ Error creating marker for case ${caseItem.id}:`, error);
       }
     }
 
-    console.log(`✅ Photo markers completed: ${markersCreated} created, ${markersSkipped} skipped`);
-    console.log(`📊 Markers created by status:`, markersByStatus);
+    console.log(`✅ Clean markers completed: ${markersCreated} created`);
     
-    // Additional debug: Check DOM for markers
-    setTimeout(() => {
-      const allMarkers = document.querySelectorAll('.custom-photo-marker');
-      console.log(`🔍 Found ${allMarkers.length} markers in DOM after creation`);
-      
-      allMarkers.forEach((markerEl, index) => {
-        const computedStyle = window.getComputedStyle(markerEl);
-        console.log(`Marker ${index + 1}:`, {
-          display: computedStyle.display,
-          visibility: computedStyle.visibility,
-          opacity: computedStyle.opacity,
-          zIndex: computedStyle.zIndex
-        });
-      });
-    }, 1000);
-    
-    // Fit all markers in view if we have any
+    // Fit markers in view
     if (markersCreated > 0 && mapInstanceRef.current) {
-      console.log('🎯 Fitting markers to view...');
       const bounds = new window.google.maps.LatLngBounds();
       casesData.forEach(caseItem => {
         if (caseItem.latitude && caseItem.longitude) {
@@ -481,24 +324,8 @@ export default function Map() {
           });
         }
       });
-      
-      // Add some padding to the bounds
-      const ne = bounds.getNorthEast();
-      const sw = bounds.getSouthWest();
-      const padding = 0.01; // Adjust this value as needed
-      
-      bounds.extend({
-        lat: ne.lat() + padding,
-        lng: ne.lng() + padding
-      });
-      bounds.extend({
-        lat: sw.lat() - padding,
-        lng: sw.lng() - padding
-      });
-      
       mapInstanceRef.current.fitBounds(bounds);
       
-      // Don't zoom too close if there's only one marker
       if (markersCreated === 1) {
         setTimeout(() => {
           if (mapInstanceRef.current) {
@@ -512,6 +339,29 @@ export default function Map() {
     }
   }, [createPhotoMarker, cleanupMarkers]);
 
+  // Apply status filter
+  const applyStatusFilter = useCallback(async (status) => {
+    setLoading(true);
+    setActiveFilter(status);
+    
+    try {
+      let filteredCases = cases;
+      
+      if (status) {
+        filteredCases = cases.filter(c => c.status === status);
+      }
+      
+      // Update markers on map
+      await addMarkersToMap(filteredCases);
+      
+      console.log(`Applied ${status || 'all'} filter: ${filteredCases.length} cases shown`);
+    } catch (error) {
+      console.error('Error applying filter:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [cases, addMarkersToMap]);
+
   // Search functionality
   const handleSearch = useCallback(async (query) => {
     if (!query.trim()) {
@@ -522,7 +372,6 @@ export default function Map() {
 
     setSearchLoading(true);
     try {
-      // Search through current cases first
       const localResults = cases.filter(caseItem =>
         caseItem.first_name.toLowerCase().includes(query.toLowerCase()) ||
         caseItem.last_name.toLowerCase().includes(query.toLowerCase()) ||
@@ -531,12 +380,10 @@ export default function Map() {
         caseItem.id.toString().includes(query)
       );
 
-      // If we have local results, use them
       if (localResults.length > 0) {
         setSearchResults(localResults);
         setShowSearchResults(true);
       } else {
-        // Search in the database for cases not currently loaded
         const searchData = await API.cases.fetchAll(1, { 
           name_or_location: query 
         });
@@ -584,17 +431,12 @@ export default function Map() {
     mapInstanceRef.current.setCenter(position);
     mapInstanceRef.current.setZoom(16);
     
-    // Close search results
     setShowSearchResults(false);
     setSearchTerm(caseItem.full_name);
-    
-    // Set as selected case
     setSelectedCase(caseItem);
-    
-    console.log(`🎯 Zoomed to case: ${caseItem.full_name} at`, position);
   }, []);
 
-  // Load map data with improved logging
+  // Load map data
   const loadMapData = useCallback(async () => {
     if (!componentMountedRef.current) {
       return;
@@ -603,37 +445,17 @@ export default function Map() {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔄 Fetching all cases data...');
       
-      // Fetch all cases without filters to show everything on the map
       const casesData = await API.cases.fetchAll(1, {});
       
       if (!componentMountedRef.current) {
         return;
       }
       
-      console.log('✅ Cases data received:', casesData);
       const casesArray = casesData.results || casesData || [];
-      
-      // Debug: Log all cases and their statuses
-      console.log('📊 All cases from API:', casesArray.map(c => ({
-        id: c.id,
-        name: c.full_name,
-        status: c.status,
-        hasCoords: !!(c.latitude && c.longitude)
-      })));
-      
-      // Filter cases that have coordinates
       const casesWithCoordinates = casesArray.filter(caseItem => 
         caseItem.latitude && caseItem.longitude
       );
-      
-      console.log(`📊 Cases with coordinates: ${casesWithCoordinates.length}/${casesArray.length}`);
-      console.log('📊 Cases by status (with coordinates):', {
-        missing: casesWithCoordinates.filter(c => c.status === 'missing').length,
-        found: casesWithCoordinates.filter(c => c.status === 'found').length,
-        under_investigation: casesWithCoordinates.filter(c => c.status === 'under_investigation').length,
-      });
       
       setCases(casesWithCoordinates);
       
@@ -643,21 +465,16 @@ export default function Map() {
       const foundCases = casesArray.filter(c => c.status === 'found').length;
       const investigatingCases = casesArray.filter(c => c.status === 'under_investigation').length;
       
-      const newStats = {
+      setStats({
         totalCases,
         activeCases,
         foundCases,
         investigatingCases,
         recentReports: 23
-      };
-      setStats(newStats);
+      });
 
-      // Add markers if map is ready
       if (mapInstanceRef.current) {
-        console.log('🗺️ Map ready, adding photo markers...');
         await addMarkersToMap(casesWithCoordinates);
-      } else {
-        console.log('❌ No map instance available');
       }
       
     } catch (err) {
@@ -670,7 +487,7 @@ export default function Map() {
         setLoading(false);
       }
     }
-  }, [addMarkersToMap]); // Removed filters dependency
+  }, [addMarkersToMap]);
 
   // Initialize the map
   const initializeMap = useCallback(() => {
@@ -680,13 +497,12 @@ export default function Map() {
 
     try {
       mapInitializedRef.current = true;
-      console.log('🏗️ Creating new Google Map instance...');
       
       const mapOptions = {
         center: { lat: 18.0735, lng: -15.9582 }, // Nouakchott coordinates
         zoom: 13,
         mapTypeId: 'roadmap',
-        mapId: import.meta.env.VITE_GOOGLE_MAPS_MAP_ID, // Add Map ID for Advanced Markers
+        mapId: import.meta.env.VITE_GOOGLE_MAPS_MAP_ID,
         disableDefaultUI: false,
         zoomControl: true,
         mapTypeControl: false,
@@ -712,13 +528,9 @@ export default function Map() {
       const map = new window.google.maps.Map(mapContainerRef.current, mapOptions);
       mapInstanceRef.current = map;
       
-      console.log('✅ Google Map instance created successfully!');
-      
-      // Set map ready and load data
       if (componentMountedRef.current) {
         setMapReady(true);
         setLoading(false);
-        console.log('🎯 Map ready, loading data...');
         loadMapData();
       }
       
@@ -742,7 +554,6 @@ export default function Map() {
       }
 
       if (window.google?.maps) {
-        console.log('✅ Google Maps already loaded, initializing...');
         scriptLoadedRef.current = true;
         setTimeout(() => {
           if (componentMountedRef.current) {
@@ -754,7 +565,6 @@ export default function Map() {
 
       const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
       if (existingScript) {
-        console.log('📝 Google Maps script already exists, waiting for load...');
         scriptLoadedRef.current = true;
         existingScript.addEventListener('load', () => {
           if (componentMountedRef.current) {
@@ -773,7 +583,6 @@ export default function Map() {
         return;
       }
 
-      console.log('📝 Creating Google Maps script...');
       scriptLoadedRef.current = true;
       
       const script = document.createElement('script');
@@ -782,11 +591,9 @@ export default function Map() {
       script.defer = true;
 
       script.onload = () => {
-        console.log('✅ Google Maps script loaded successfully!');
         if (componentMountedRef.current) {
           const checkReady = () => {
             if (window.google?.maps?.Map) {
-              console.log('🎉 Google Maps API ready!');
               initializeMap();
             } else if (componentMountedRef.current) {
               setTimeout(checkReady, 100);
@@ -834,46 +641,36 @@ export default function Map() {
     setSelectedCase(null);
   };
 
-  return (
-    <div className="p-6 space-y-6">
-      {/* Map Header with Search */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900"> Map View of Cases</h1>
-          </div>
-          <div className="flex space-x-3">
-            <button 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={centerMap}
-              disabled={!mapReady || loading}
-            >
-              <MapPin className="h-4 w-4 inline mr-2" />
-              Center Map
-            </button>
-            <button 
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={loadMapData}
-              disabled={loading}
-            >
-              <svg className="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-              </svg>
-              Reload Markers
-            </button>
-          </div>
-        </div>
+  // Get status info
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case 'missing':
+        return { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-100', label: 'Missing' };
+      case 'found':
+        return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', label: 'Found' };
+      case 'under_investigation':
+        return { icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100', label: 'Investigating' };
+      default:
+        return { icon: AlertCircle, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Unknown' };
+    }
+  };
 
-        {/* Enhanced Search Bar */}
-        <div className="relative">
-          <div className="relative">
+  return (
+    <>
+     
+
+      {/* Controls Bar */}
+      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div className="flex items-center space-x-4">
+          {/* Search Bar - Takes most width */}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, case ID, or location..."
-              className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search by name, or last seen location..."
+              className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             {searchTerm && (
               <button
@@ -888,100 +685,160 @@ export default function Map() {
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               </div>
             )}
-          </div>
 
-          {/* Search Results Dropdown */}
-          {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-              {searchResults.map((caseItem) => (
-                <div
-                  key={caseItem.id}
-                  className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  onClick={() => zoomToCase(caseItem)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={caseItem.photo || '/default-avatar.png'}
-                      alt={caseItem.full_name}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                      onError={(e) => { e.target.src = '/default-avatar.png'; }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{caseItem.full_name}</h4>
-                          <p className="text-sm text-gray-600">Case #{caseItem.id} • {caseItem.last_seen_location}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            caseItem.status === 'missing' ? 'bg-red-100 text-red-800' :
-                            caseItem.status === 'found' ? 'bg-green-100 text-green-800' :
-                            caseItem.status === 'under_investigation' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {caseItem.status.replace('_', ' ')}
-                          </span>
-                          <Eye className="h-4 w-4 text-blue-600" />
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                {searchResults.map((caseItem) => (
+                  <div
+                    key={caseItem.id}
+                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                    onClick={() => zoomToCase(caseItem)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={caseItem.photo || '/default-avatar.png'}
+                        alt={caseItem.full_name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                        onError={(e) => { e.target.src = '/default-avatar.png'; }}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{caseItem.full_name}</h4>
+                            <p className="text-sm text-gray-600">Case • {caseItem.last_seen_location}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              caseItem.status === 'missing' ? 'bg-red-100 text-red-800' :
+                              caseItem.status === 'found' ? 'bg-green-100 text-green-800' :
+                              caseItem.status === 'under_investigation' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {caseItem.status.replace('_', ' ')}
+                            </span>
+                            <Eye className="h-4 w-4 text-blue-600" />
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* No Results Message */}
-          {showSearchResults && searchResults.length === 0 && !searchLoading && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 text-center text-gray-500">
-              No cases found matching "{searchTerm}"
-            </div>
-          )}
+          {/* Action Button */}
+          <button 
+            className="flex items-center px-4 py-2.5 bg-findthem-teal text-white rounded-lg hover:bg-findthem-darkGreen transition-colors disabled:opacity-50 flex-shrink-0"
+            onClick={loadMapData}
+            disabled={loading}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {loading ? 'Loading...' : 'Refresh'}
+          </button>
         </div>
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <strong className="font-bold">Error: </strong>
-          <span>{error}</span>
-          <button 
-            onClick={() => {
-              setError(null);
-              loadMapData();
-            }}
-            className="ml-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : 'Retry'}
-          </button>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span className="font-medium">Error:</span>
+            <span className="ml-2">{error}</span>
+            <button 
+              onClick={() => {
+                setError(null);
+                loadMapData();
+              }}
+              className="ml-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Retry'}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Map Controls and Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Map Container */}
-        <div className="lg:col-span-3 relative">
-          <div
-            ref={mapContainerRef}
-            className="w-full h-[600px] rounded-lg overflow-hidden shadow-lg bg-gray-100 border"
-            style={{ minHeight: '600px' }}
-          />
-          
-          {/* Loading Overlay */}
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-10 rounded-lg">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading photo markers...</p>
+      {/* Main Content - Map now takes full width */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Map Container - Takes full width when no selected case */}
+        <div className={selectedCase ? "xl:col-span-3" : "xl:col-span-4"}>
+          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+            {/* Interactive Map Header */}
+            <div className="p-4 border-b bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <button
+                    onClick={() => applyStatusFilter('')}
+                    className={`text-left hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors ${
+                      activeFilter === '' ? 'bg-findthem-lighter' : ''
+                    }`}
+                  >
+                    <h2 className="text-lg font-semibold text-gray-900">Map View</h2>
+                    <p className="text-sm text-gray-600">{cases.length} cases with location data</p>
+                  </button>
+                </div>
+                <div className="flex items-center space-x-4 text-sm">
+                  <button
+                    onClick={() => applyStatusFilter('missing')}
+                    className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-red-50 ${
+                      activeFilter === 'missing' ? 'bg-red-100 border border-red-200' : ''
+                    }`}
+                  >
+                    <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                    <span className="text-gray-700 font-medium">Missing ({cases.filter(c => c.status === 'missing').length})</span>
+                  </button>
+                  <button
+                    onClick={() => applyStatusFilter('found')}
+                    className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-green-50 ${
+                      activeFilter === 'found' ? 'bg-green-100 border border-green-200' : ''
+                    }`}
+                  >
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                    <span className="text-gray-700 font-medium">Found ({cases.filter(c => c.status === 'found').length})</span>
+                  </button>
+                  <button
+                    onClick={() => applyStatusFilter('under_investigation')}
+                    className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-yellow-50 ${
+                      activeFilter === 'under_investigation' ? 'bg-yellow-100 border border-yellow-200' : ''
+                    }`}
+                  >
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                    <span className="text-gray-700 font-medium">Investigating ({cases.filter(c => c.status === 'under_investigation').length})</span>
+                  </button>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Selected Case Info Panel */}
-          {selectedCase && (
-            <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 max-w-sm z-20">
-              <div className="flex items-center justify-between mb-3">
+            {/* Map */}
+            <div className="relative">
+              <div
+                ref={mapContainerRef}
+                className="w-full h-[700px] bg-gray-100"
+                style={{ minHeight: '700px' }}
+              />
+              
+              {/* Loading Overlay */}
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-10">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading map...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar - Only shows when case is selected */}
+        {selectedCase && (
+          <div className="space-y-6">
+            {/* Selected Case Info */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Selected Case</h3>
                 <button
                   onClick={() => setSelectedCase(null)}
@@ -990,85 +847,96 @@ export default function Map() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="flex items-center space-x-3">
-                <img
-                  src={selectedCase.photo || '/default-avatar.png'}
-                  alt={selectedCase.full_name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-                  onError={(e) => { e.target.src = '/default-avatar.png'; }}
-                />
+              
+              <div className="flex items-center space-x-4 mb-4">
+                
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{selectedCase.full_name}</h4>
+                  <h4 className="text-lg font-semibold text-gray-900">{selectedCase.full_name}</h4>
                   <p className="text-sm text-gray-600">Case #{selectedCase.id}</p>
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                    selectedCase.status === 'missing' ? 'bg-red-100 text-red-800' :
-                    selectedCase.status === 'found' ? 'bg-green-100 text-green-800' :
-                    selectedCase.status === 'under_investigation' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {selectedCase.status.replace('_', ' ')}
-                  </span>
+                  <div className="mt-2">
+                    {(() => {
+                      const statusInfo = getStatusInfo(selectedCase.status);
+                      const StatusIcon = statusInfo.icon;
+                      return (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {statusInfo.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
-              <div className="mt-3">
-                <p className="text-sm text-gray-600">
-                  <MapPin className="h-4 w-4 inline mr-1" />
-                  {selectedCase.last_seen_location}
-                </p>
-                <button
-                  onClick={() => navigate(`/cases/${selectedCase.id}`)}
-                  className="mt-2 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                >
-                  View Full Details
-                </button>
+              
+              <div className="space-y-3">
+                <div className="flex items-start space-x-2">
+                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Last Seen Location</p>
+                    <p className="text-sm text-gray-600">{selectedCase.last_seen_location}</p>
+                  </div>
+                </div>
+                
+                {selectedCase.last_seen_date && (
+                  <div className="flex items-start space-x-2">
+                    <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Last Seen Date</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(selectedCase.last_seen_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
+              
+              <button
+                onClick={() => navigate(`/cases/${selectedCase.id}`)}
+                className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View Full Details
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* Sidebar with Stats */}
-        <div className="space-y-6">
-          {/* Map Statistics */}
-          <div className="bg-white p-4 rounded-lg border">
-            <h3 className="font-semibold text-gray-900 mb-3">Cases on Map</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-gray-600">Missing</span>
-                </div>
-                <span className="font-semibold text-red-600">
-                  {cases.filter(c => c.status === 'missing').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-gray-600">Found</span>
-                </div>
-                <span className="font-semibold text-green-600">
-                  {cases.filter(c => c.status === 'found').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-gray-600">Investigating</span>
-                </div>
-                <span className="font-semibold text-yellow-600">
-                  {cases.filter(c => c.status === 'under_investigation').length}
-                </span>
-              </div>
-              <div className="border-t pt-3 mt-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Total on Map</span>
-                  <span className="font-bold text-gray-900 text-lg">{cases.length}</span>
-                </div>
+      {/* Hover Tooltip */}
+      {hoveredCase && (
+        <div
+          className="fixed z-[9999] bg-white rounded-lg shadow-xl border p-4 pointer-events-none"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y - 100}px`,
+            transform: 'translateX(-50%)',
+            maxWidth: '280px'
+          }}
+        >
+          <div className="flex items-center space-x-3">
+        
+            <div className="flex-1">
+              <h4 className="font-semibold text-gray-900 text-sm">{hoveredCase.full_name}</h4>
+              <div className="flex items-center space-x-2 mt-1">
+                {(() => {
+                  const statusInfo = getStatusInfo(hoveredCase.status);
+                  const StatusIcon = statusInfo.icon;
+                  return (
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {statusInfo.label}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
           </div>
+          
+          {/* Tooltip Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+            <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"></div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }

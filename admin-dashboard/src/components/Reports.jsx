@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, AlertCircle, AlertTriangle, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, AlertCircle, AlertTriangle, X, ChevronLeft, ChevronRight, Filter, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import API from '../api';
 
 // Reusable Dialog Component - No decorative line
@@ -131,6 +131,9 @@ export default function Reports() {
   const navigate = useNavigate();
   const [casesCache, setCasesCache] = useState({});
   
+  // Filter visibility state
+  const [showFilters, setShowFilters] = useState(false);
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [reportsPerPage] = useState(5);
@@ -231,6 +234,8 @@ export default function Reports() {
     if (hasUrlFilters) {
       console.log('Applying URL filters:', urlFilters);
       setFilters(urlFilters);
+      // Auto-expand filters if there are active filters from URL
+      setShowFilters(true);
     }
   }, [searchParams]);
 
@@ -400,6 +405,11 @@ export default function Reports() {
     };
     setFilters(emptyFilters);
     setSearchParams(new URLSearchParams());
+  };
+
+  // Check if any filters are active (excluding search)
+  const hasActiveFilters = () => {
+    return filters.status || filters.dateStart;
   };
 
   const handleSelectAll = () => {
@@ -675,47 +685,77 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Search and Filters - Auto-applying */}
+        {/* Search and Filters - UPDATED WITH COLLAPSIBLE FILTERS */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="mb-4">
-            <input
-              type="text"
-              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              placeholder="Search by missing person, reporter, or report ID"
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-4 justify-end items-center">
-            <select
-              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="new">New</option>
-              <option value="verified">Verified</option>
-              <option value="false">False</option>
-              <option value="unverified">Unverified</option>
-            </select>
-
-            <input
-              type="date"
-              className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.dateStart}
-              onChange={(e) => handleFilterChange('dateStart', e.target.value)}
-              max={getTodayDate()}
-              placeholder="From date"
-            />
-
+          {/* Search Bar with Filter Button */}
+          <div className="flex gap-4 mb-4">
+          <div className="flex-1">
+  <div className="relative">
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+    <input
+      type="text"
+      className="w-full pl-10 pr-4 py-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+      placeholder="Search by missing person, reporter, or report ID"
+      value={filters.search}
+      onChange={(e) => handleFilterChange('search', e.target.value)}
+    />
+  </div>
+</div>
             <button
-              className="bg-gray-300 text-gray-700 p-3 rounded-lg hover:bg-gray-400 w-full md:w-auto transition-colors"
-              onClick={clearAllFilters}
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-6 py-4 border rounded-lg font-medium transition-all ${
+                showFilters 
+                  ? 'bg-findthem-teal text-white border-findthem-teal' 
+                  : hasActiveFilters() 
+                    ? 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100' 
+                    : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+              }`}
             >
-              Clear All
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+              {hasActiveFilters() && (
+                <span className="bg-findthem-lightteal text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                  {Object.values(filters).filter(v => v && v !== filters.search).length}
+                </span>
+              )}
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
           </div>
+
+          {/* Collapsible Filters */}
+          {showFilters && (
+            <div className="border-t pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex flex-col md:flex-row gap-4 justify-end items-center">
+                <select
+                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                >
+                  <option value="">All Status</option>
+                  <option value="new">New</option>
+                  <option value="verified">Verified</option>
+                  <option value="false">False</option>
+                  <option value="unverified">Unverified</option>
+                </select>
+
+                <input
+                  type="date"
+                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.dateStart}
+                  onChange={(e) => handleFilterChange('dateStart', e.target.value)}
+                  max={getTodayDate()}
+                  placeholder="From date"
+                />
+
+                <button
+                  className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 w-full md:w-auto transition-colors"
+                  onClick={clearAllFilters}
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Reports Table - No ID column */}
@@ -782,64 +822,80 @@ export default function Reports() {
                 </tr>
               </thead>
               <tbody>
-                {currentReports.map((report) => (
-                  <tr key={report.id} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="p-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedReports.includes(report.id)}
-                        onChange={() => handleSelectReport(report.id)}
-                        className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
-                      />
-                    </td>
-                    <td className="p-4">{report.reporter || 'Anonymous'}</td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => handleCaseClick(report.missing_person)}
-                        className="text-findthem-teal hover:text-findthem-darkGreen hover:underline cursor-pointer font-medium transition-colors"
-                      >
-                        {report.missing_person_name || `Case #${report.missing_person}`}
-                      </button>
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(report.report_status)}`}>
-                        {report.report_status}
-                      </span>
-                    </td>
-                    <td className="p-4 max-w-xs">
-                      <div className="truncate" title={report.note}>
-                        {truncateNote(report.note)}
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" className="p-8 text-center text-gray-500">
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-findthem-teal mr-3"></div>
+                        Loading reports...
                       </div>
                     </td>
-                    <td className="p-4">{formatDate(report.date_submitted)}</td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => handleViewNote(report)}
-                        className="bg-findthem-teal text-white px-3 py-1 rounded text-sm hover:bg-findthem-darkGreen transition-colors"
-                      >
-                        View Note
-                      </button>
+                  </tr>
+                ) : currentReports.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="p-8 text-center text-gray-500">
+                      <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      <p className="text-lg font-medium">
+                        {filters.status ? 
+                          `No ${filters.status} reports found.` : 
+                          'No reports found.'
+                        }
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        {Object.values(filters).some(f => f) 
+                          ? 'No reports found matching your criteria.' 
+                          : 'No reports have been submitted yet.'
+                        }
+                      </p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  currentReports.map((report) => (
+                    <tr key={report.id} className="border-b hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedReports.includes(report.id)}
+                          onChange={() => handleSelectReport(report.id)}
+                          className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
+                        />
+                      </td>
+                      <td className="p-4">{report.reporter || 'Anonymous'}</td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleCaseClick(report.missing_person)}
+                          className="text-findthem-teal hover:text-findthem-darkGreen hover:underline cursor-pointer font-medium transition-colors"
+                        >
+                          {report.missing_person_name || `Case #${report.missing_person}`}
+                        </button>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(report.report_status)}`}>
+                          {report.report_status}
+                        </span>
+                      </td>
+                      <td className="p-4 max-w-xs">
+                        <div className="truncate" title={report.note}>
+                          {truncateNote(report.note)}
+                        </div>
+                      </td>
+                      <td className="p-4">{formatDate(report.date_submitted)}</td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleViewNote(report)}
+                          className="bg-findthem-teal text-white px-3 py-1 rounded text-sm hover:bg-findthem-darkGreen transition-colors"
+                        >
+                          View Note
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-
-          {/* Empty State */}
-          {filteredReports.length === 0 && !showNoReportsDialog && (
-            <div className="p-8 text-center text-gray-500">
-              <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <p className="text-lg font-medium">
-                {filters.status ? 
-                  `No ${filters.status} reports found.` : 
-                  'No reports found.'
-                }
-              </p>
-            </div>
-          )}
 
           {/* Simple Pagination - Only Previous/Next */}
           {totalPages > 1 && (

@@ -439,11 +439,11 @@ export default function Home() {
       </div>
 
   
-   {/* Action Cards */}
+{/* Action Cards */}
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
   {/* Add New Case */}
   <div 
-    className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+    className="bg-gradient-to-br from-teal-500 to-teal-700 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
     onClick={handleNavigateToAddCase}
   >
     <div className="flex items-center justify-between mb-4">
@@ -457,12 +457,12 @@ export default function Home() {
       </svg>
     </div>
     <h3 className="text-xl font-bold mb-2">Add New Case</h3>
-    <p className="text-orange-100">Submit a new missing person case</p>
+    <p className="text-teal-100">Submit a new missing person case</p>
   </div>
   
   {/* Add Case Update */}
   <div 
-    className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+    className="bg-gradient-to-br from-cyan-500 to-cyan-700 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
     onClick={handleAddCaseUpdate}
   >
     <div className="flex items-center justify-between mb-4">
@@ -476,18 +476,17 @@ export default function Home() {
       </svg>
     </div>
     <h3 className="text-xl font-bold mb-2">Add Case Update</h3>
-    <p className="text-indigo-100">Send updates to case reporters</p>
+    <p className="text-cyan-100">Send updates to case reporters</p>
   </div>
   
   {/* Send Alert */}
   <div 
-    className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+    className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
     onClick={handleSendAlert}
   >
     <div className="flex items-center justify-between mb-4">
       <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
         <BellRing className="h-5 w-5" />
-
       </div>
       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>

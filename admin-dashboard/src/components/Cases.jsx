@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import API from '../api.js'; 
 
 export default function Cases() {
@@ -14,6 +14,9 @@ export default function Cases() {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [currentBackendPage, setCurrentBackendPage] = useState(1);
   
+  // Filter visibility state
+  const [showFilters, setShowFilters] = useState(false);
+
   // Custom Dialog State
   const [dialog, setDialog] = useState({
     isOpen: false,
@@ -134,6 +137,8 @@ export default function Cases() {
     if (hasUrlFilters) {
       console.log('✅ Applying URL filters:', urlFilters);
       setFilters(urlFilters);
+      // Auto-expand filters if there are active filters from URL
+      setShowFilters(true);
     }
   }, [searchParams]);
 
@@ -365,6 +370,11 @@ const fetchDashboardStats = async () => {
     };
     setFilters(emptyFilters);
     setSearchParams(new URLSearchParams());
+  };
+
+  // Check if any filters are active (excluding search)
+  const hasActiveFilters = () => {
+    return filters.gender || filters.status || filters.submission_status || filters.age_min || filters.age_max;
   };
 
   // Toggle case selection
@@ -610,69 +620,100 @@ const fetchDashboardStats = async () => {
           </div>
         </div>
 
-        {/* Search and Filter Section */}
+        {/* Search and Filter Section - UPDATED WITH COLLAPSIBLE FILTERS */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="mb-4">
-            <input
-              type="text"
-              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              placeholder="Search by name, location, or case ID..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <select 
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal" 
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">Status</option>
-              <option value="missing">Missing</option>
-              <option value="found">Found</option>
-              <option value="under_investigation">Investigating</option>
-            </select>
-            <select 
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.submission_status}
-              onChange={(e) => handleFilterChange('submission_status', e.target.value)}
-            >
-              <option value="">Type</option>
-              <option value="active">Active</option>
-              <option value="in_progress">In Progress</option>
-              <option value="closed">Closed</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <select 
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              value={filters.gender}
-              onChange={(e) => handleFilterChange('gender', e.target.value)}
-            >
-              <option value="">All Genders</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-            <input
-              type="number"
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              placeholder="Min Age"
-              value={filters.age_min}
-              onChange={(e) => handleFilterChange('age_min', e.target.value)}
-            />
-            <input
-              type="number"
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-              placeholder="Max Age"
-              value={filters.age_max}
-              onChange={(e) => handleFilterChange('age_max', e.target.value)}
-            />
+          {/* Search Bar with Filter Button */}
+          <div className="flex gap-4 mb-4">
+         <div className="relative flex-1">
+  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+  <input
+    type="text"
+    className="w-full pl-10 pr-4 py-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+    placeholder="Search by name, location, or case ID..."
+    value={filters.search}
+    onChange={(e) => handleFilterChange('search', e.target.value)}
+  />
+</div>
             <button
-              className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-colors"
-              onClick={clearAllFilters}
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-6 py-4 border rounded-lg font-medium transition-all ${
+                showFilters 
+                  ? 'bg-findthem-teal text-white border-findthem-teal' 
+                  : hasActiveFilters() 
+                    ? 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100' 
+                    : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+              }`}
             >
-              Clear All
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+              {hasActiveFilters() && (
+                <span className="bg-findthem-lightteal text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                  {Object.values(filters).filter(v => v && v !== filters.search).length}
+                </span>
+              )}
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
           </div>
+
+          {/* Collapsible Filters */}
+          {showFilters && (
+            <div className="border-t pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <select 
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal" 
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                >
+                  <option value="">All Status</option>
+                  <option value="missing">Missing</option>
+                  <option value="found">Found</option>
+                  <option value="under_investigation">Investigating</option>
+                </select>
+                <select 
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.submission_status}
+                  onChange={(e) => handleFilterChange('submission_status', e.target.value)}
+                >
+                  <option value="">All Types</option>
+                  <option value="active">Active</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="closed">Closed</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <select 
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  value={filters.gender}
+                  onChange={(e) => handleFilterChange('gender', e.target.value)}
+                >
+                  <option value="">All Genders</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                <input
+                  type="number"
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  placeholder="Min Age"
+                  value={filters.age_min}
+                  onChange={(e) => handleFilterChange('age_min', e.target.value)}
+                />
+                <input
+                  type="number"
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  placeholder="Max Age"
+                  value={filters.age_max}
+                  onChange={(e) => handleFilterChange('age_max', e.target.value)}
+                />
+                <button
+                  className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-colors"
+                  onClick={clearAllFilters}
+                >
+                  Clear All
+                </button>
+              </div>
+              
+         
+            </div>
+          )}
         </div>
 
         {/* Cases Table */}
@@ -902,6 +943,72 @@ const fetchDashboardStats = async () => {
             </div>
           )}
         </div>
+
+        {/* Custom Dialog Component */}
+        {dialog.isOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center mb-4">
+                {dialog.type === 'success' && (
+                  <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                )}
+                {dialog.type === 'error' && (
+                  <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </div>
+                )}
+                {dialog.type === 'warning' && (
+                  <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                  </div>
+                )}
+                {dialog.type === 'confirm' && (
+                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                )}
+                <h3 className="text-lg font-medium text-gray-900">{dialog.title}</h3>
+              </div>
+              <p className="text-gray-600 mb-6">{dialog.message}</p>
+              <div className="flex justify-end space-x-3">
+                {dialog.showCancel && (
+                  <button
+                    onClick={closeDialog}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    {dialog.cancelText}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (dialog.onConfirm) {
+                      dialog.onConfirm();
+                    } else {
+                      closeDialog();
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    dialog.type === 'error' || dialog.type === 'warning'
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-findthem-teal text-white hover:bg-findthem-darkGreen'
+                  }`}
+                >
+                  {dialog.confirmText}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
