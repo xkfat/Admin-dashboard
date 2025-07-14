@@ -746,8 +746,7 @@ export const API = {
         const data = await makeRequest(`/api/ai-matches/${matchId}/review/`, {
           method: 'POST',
           body: {
-            action, // 'confirm' or 'reject'
-            admin_notes: adminNotes
+            action // 'confirm' or 'reject'
           }
         });
         return data;
@@ -758,9 +757,9 @@ export const API = {
     },
 
     // Confirm an AI match
-    confirm: async (matchId, adminNotes = '') => {
+    confirm: async (matchId) => {
       try {
-        return await API.aiMatches.review(matchId, 'confirm', adminNotes);
+        return await API.aiMatches.review(matchId, 'confirm');
       } catch (error) {
         console.error(`Error confirming AI match ${matchId}:`, error);
         throw error;
@@ -768,9 +767,9 @@ export const API = {
     },
 
     // Reject an AI match
-    reject: async (matchId, adminNotes = '') => {
+    reject: async (matchId) => {
       try {
-        return await API.aiMatches.review(matchId, 'reject', adminNotes);
+        return await API.aiMatches.review(matchId, 'reject');
       } catch (error) {
         console.error(`Error rejecting AI match ${matchId}:`, error);
         throw error;

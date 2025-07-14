@@ -442,7 +442,7 @@ export default function Reports() {
 
     showCustomDialog(
       'confirm',
-      'Confirm Bulk Update',
+      'Change Status',
       `Are you sure you want to update ${selectedReports.length} selected reports to "${newStatus}" status?`,
       async () => {
         closeCustomDialog();

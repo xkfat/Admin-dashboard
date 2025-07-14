@@ -610,7 +610,7 @@ export default function AIMatches() {
     showCustomDialog(
       action === 'delete' ? 'warning' : 'confirm',
       `${action.charAt(0).toUpperCase() + action.slice(1)} Match`,
-      `Are you sure you want to ${actionNames[action]} for ${caseName}? ${actionMessages[action]}`,
+      `Are you sure you want to ${actionNames[action]} for ${caseName}?`,
       async () => {
         closeCustomDialog();
         

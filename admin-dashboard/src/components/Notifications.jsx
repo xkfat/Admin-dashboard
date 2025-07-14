@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import API from '../api';
 
-// Custom Dialog Component (simplified - only for mark all read and clear all)
 const CustomDialog = ({ 
   isOpen, 
   onClose, 
@@ -462,7 +461,6 @@ const AdminNotifications = () => {
                         
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                           <span>{formatDate(notification.date_created)}</span>
-                          <span className="capitalize">{notification.notification_type.replace('_', ' ')}</span>
                           {notification.target_model && (
                             <span className="text-findthem-button">Click to view details</span>
                           )}
