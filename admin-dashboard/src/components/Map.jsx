@@ -645,298 +645,298 @@ export default function Map() {
   const getStatusInfo = (status) => {
     switch (status) {
       case 'missing':
-        return { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-100', label: 'Missing' };
+        return { icon: AlertCircle, color: 'text-red-600 dark:text-red-500', bg: 'bg-red-100 dark:bg-red-900/20', label: 'Missing' };
       case 'found':
-        return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100', label: 'Found' };
+        return { icon: CheckCircle, color: 'text-green-600 dark:text-green-500', bg: 'bg-green-100 dark:bg-green-900/20', label: 'Found' };
       case 'under_investigation':
-        return { icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-100', label: 'Investigating' };
+        return { icon: Clock, color: 'text-yellow-600 dark:text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-900/20', label: 'Investigating' };
       default:
-        return { icon: AlertCircle, color: 'text-gray-600', bg: 'bg-gray-100', label: 'Unknown' };
+        return { icon: AlertCircle, color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-100 dark:bg-gray-700', label: 'Unknown' };
     }
   };
 
   return (
-    <>
-     
+    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6">
+      <div className="space-y-6">
+        {/* Controls Bar */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-4">
+          <div className="flex items-center space-x-4">
+            {/* Search Bar - Takes most width */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, or last seen location..."
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+              {searchLoading && (
+                <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                </div>
+              )}
 
-      {/* Controls Bar */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-        <div className="flex items-center space-x-4">
-          {/* Search Bar - Takes most width */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, or last seen location..."
-              className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            {searchTerm && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
-            {searchLoading && (
-              <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              </div>
-            )}
-
-            {/* Search Results Dropdown */}
-            {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-                {searchResults.map((caseItem) => (
-                  <div
-                    key={caseItem.id}
-                    className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                    onClick={() => zoomToCase(caseItem)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={caseItem.photo || '/default-avatar.png'}
-                        alt={caseItem.full_name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                        onError={(e) => { e.target.src = '/default-avatar.png'; }}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{caseItem.full_name}</h4>
-                            <p className="text-sm text-gray-600">Case • {caseItem.last_seen_location}</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              caseItem.status === 'missing' ? 'bg-red-100 text-red-800' :
-                              caseItem.status === 'found' ? 'bg-green-100 text-green-800' :
-                              caseItem.status === 'under_investigation' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {caseItem.status.replace('_', ' ')}
-                            </span>
-                            <Eye className="h-4 w-4 text-blue-600" />
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                  {searchResults.map((caseItem) => (
+                    <div
+                      key={caseItem.id}
+                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                      onClick={() => zoomToCase(caseItem)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <img
+                          src={caseItem.photo || '/default-avatar.png'}
+                          alt={caseItem.full_name}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                          onError={(e) => { e.target.src = '/default-avatar.png'; }}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium text-gray-900 dark:text-white">{caseItem.full_name}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">Case • {caseItem.last_seen_location}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                caseItem.status === 'missing' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
+                                caseItem.status === 'found' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400' :
+                                caseItem.status === 'under_investigation' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400' :
+                                'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                              }`}>
+                                {caseItem.status.replace('_', ' ')}
+                              </span>
+                              <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Action Button */}
-          <button 
-            className="flex items-center px-4 py-2.5 bg-findthem-teal text-white rounded-lg hover:bg-findthem-darkGreen transition-colors disabled:opacity-50 flex-shrink-0"
-            onClick={loadMapData}
-            disabled={loading}
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-      </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <span className="font-medium">Error:</span>
-            <span className="ml-2">{error}</span>
-            <button 
-              onClick={() => {
-                setError(null);
-                loadMapData();
-              }}
-              className="ml-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Retry'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content - Map now takes full width */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        {/* Map Container - Takes full width when no selected case */}
-        <div className={selectedCase ? "xl:col-span-3" : "xl:col-span-4"}>
-          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-            {/* Interactive Map Header */}
-            <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <button
-                    onClick={() => applyStatusFilter('')}
-                    className={`text-left hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors ${
-                      activeFilter === '' ? 'bg-findthem-lighter' : ''
-                    }`}
-                  >
-                    <h2 className="text-lg font-semibold text-gray-900">Map View</h2>
-                    <p className="text-sm text-gray-600">{cases.length} cases with location data</p>
-                  </button>
-                </div>
-                <div className="flex items-center space-x-4 text-sm">
-                  <button
-                    onClick={() => applyStatusFilter('missing')}
-                    className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-red-50 ${
-                      activeFilter === 'missing' ? 'bg-red-100 border border-red-200' : ''
-                    }`}
-                  >
-                    <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                    <span className="text-gray-700 font-medium">Missing ({cases.filter(c => c.status === 'missing').length})</span>
-                  </button>
-                  <button
-                    onClick={() => applyStatusFilter('found')}
-                    className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-green-50 ${
-                      activeFilter === 'found' ? 'bg-green-100 border border-green-200' : ''
-                    }`}
-                  >
-                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-gray-700 font-medium">Found ({cases.filter(c => c.status === 'found').length})</span>
-                  </button>
-                  <button
-                    onClick={() => applyStatusFilter('under_investigation')}
-                    className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-yellow-50 ${
-                      activeFilter === 'under_investigation' ? 'bg-yellow-100 border border-yellow-200' : ''
-                    }`}
-                  >
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                    <span className="text-gray-700 font-medium">Investigating ({cases.filter(c => c.status === 'under_investigation').length})</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Map */}
-            <div className="relative">
-              <div
-                ref={mapContainerRef}
-                className="w-full h-[700px] bg-gray-100"
-                style={{ minHeight: '700px' }}
-              />
-              
-              {/* Loading Overlay */}
-              {loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75 z-10">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading map...</p>
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
+
+            {/* Action Button */}
+            <button 
+              className="flex items-center px-4 py-2.5 bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors disabled:opacity-50 flex-shrink-0"
+              onClick={loadMapData}
+              disabled={loading}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
           </div>
         </div>
 
-        {/* Sidebar - Only shows when case is selected */}
-        {selectedCase && (
-          <div className="space-y-6">
-            {/* Selected Case Info */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Selected Case</h3>
-                <button
-                  onClick={() => setSelectedCase(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              
-              <div className="flex items-center space-x-4 mb-4">
-                
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-gray-900">{selectedCase.full_name}</h4>
-                  <p className="text-sm text-gray-600">Case #{selectedCase.id}</p>
-                  <div className="mt-2">
-                    {(() => {
-                      const statusInfo = getStatusInfo(selectedCase.status);
-                      const StatusIcon = statusInfo.icon;
-                      return (
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {statusInfo.label}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-start space-x-2">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Last Seen Location</p>
-                    <p className="text-sm text-gray-600">{selectedCase.last_seen_location}</p>
-                  </div>
-                </div>
-                
-                {selectedCase.last_seen_date && (
-                  <div className="flex items-start space-x-2">
-                    <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Last Seen Date</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(selectedCase.last_seen_date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <button
-                onClick={() => navigate(`/cases/${selectedCase.id}`)}
-                className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <span className="font-medium">Error:</span>
+              <span className="ml-2">{error}</span>
+              <button 
+                onClick={() => {
+                  setError(null);
+                  loadMapData();
+                }}
+                className="ml-4 bg-red-600 dark:bg-red-700 text-white px-3 py-1 rounded hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50"
+                disabled={loading}
               >
-                View Full Details
+                {loading ? 'Loading...' : 'Retry'}
               </button>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Hover Tooltip */}
-      {hoveredCase && (
-        <div
-          className="fixed z-[9999] bg-white rounded-lg shadow-xl border p-4 pointer-events-none"
-          style={{
-            left: `${tooltipPosition.x}px`,
-            top: `${tooltipPosition.y - 100}px`,
-            transform: 'translateX(-50%)',
-            maxWidth: '280px'
-          }}
-        >
-          <div className="flex items-center space-x-3">
-        
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-900 text-sm">{hoveredCase.full_name}</h4>
-              <div className="flex items-center space-x-2 mt-1">
-                {(() => {
-                  const statusInfo = getStatusInfo(hoveredCase.status);
-                  const StatusIcon = statusInfo.icon;
-                  return (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
-                      <StatusIcon className="h-3 w-3 mr-1" />
-                      {statusInfo.label}
-                    </span>
-                  );
-                })()}
+        {/* Main Content - Map now takes full width */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Map Container - Takes full width when no selected case */}
+          <div className={selectedCase ? "xl:col-span-3" : "xl:col-span-4"}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 overflow-hidden">
+              {/* Interactive Map Header */}
+              <div className="p-4 border-b dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <button
+                      onClick={() => applyStatusFilter('')}
+                      className={`text-left hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg p-2 -m-2 transition-colors ${
+                        activeFilter === '' ? '' : ''
+                      }`}
+                    >
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Map View</h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{cases.length} cases with location data</p>
+                    </button>
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <button
+                      onClick={() => applyStatusFilter('missing')}
+                      className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 ${
+                        activeFilter === 'missing' ? 'bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-700' : ''
+                      }`}
+                    >
+                      <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">Missing ({cases.filter(c => c.status === 'missing').length})</span>
+                    </button>
+                    <button
+                      onClick={() => applyStatusFilter('found')}
+                      className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-green-50 dark:hover:bg-green-900/20 ${
+                        activeFilter === 'found' ? 'bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-700' : ''
+                      }`}
+                    >
+                      <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">Found ({cases.filter(c => c.status === 'found').length})</span>
+                    </button>
+                    <button
+                      onClick={() => applyStatusFilter('under_investigation')}
+                      className={`flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-yellow-50 dark:hover:bg-yellow-900/20 ${
+                        activeFilter === 'under_investigation' ? 'bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700' : ''
+                      }`}
+                    >
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">Investigating ({cases.filter(c => c.status === 'under_investigation').length})</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Map */}
+              <div className="relative">
+                <div
+                  ref={mapContainerRef}
+                  className="w-full h-[700px] bg-gray-100 dark:bg-gray-600"
+                  style={{ minHeight: '700px' }}
+                />
+                
+                {/* Loading Overlay */}
+                {loading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 bg-opacity-75 z-10">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-4 text-gray-600 dark:text-gray-300">Loading map...</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          
-          {/* Tooltip Arrow */}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2">
-            <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"></div>
-          </div>
+
+          {/* Sidebar - Only shows when case is selected */}
+          {selectedCase && (
+            <div className="space-y-6">
+              {/* Selected Case Info */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Selected Case</h3>
+                  <button
+                    onClick={() => setSelectedCase(null)}
+                    className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                <div className="flex items-center space-x-4 mb-4">
+                  
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedCase.full_name}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Case #{selectedCase.id}</p>
+                    <div className="mt-2">
+                      {(() => {
+                        const statusInfo = getStatusInfo(selectedCase.status);
+                        const StatusIcon = statusInfo.icon;
+                        return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {statusInfo.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-2">
+                    <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Seen Location</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{selectedCase.last_seen_location}</p>
+                    </div>
+                  </div>
+                  
+                  {selectedCase.last_seen_date && (
+                    <div className="flex items-start space-x-2">
+                      <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Seen Date</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {new Date(selectedCase.last_seen_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <button
+                  onClick={() => navigate(`/cases/${selectedCase.id}`)}
+                  className="w-full mt-4 bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                >
+                  View Full Details
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </>
+
+        {/* Hover Tooltip */}
+        {hoveredCase && (
+          <div
+            className="fixed z-[9999] bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-600 p-4 pointer-events-none"
+            style={{
+              left: `${tooltipPosition.x}px`,
+              top: `${tooltipPosition.y - 100}px`,
+              transform: 'translateX(-50%)',
+              maxWidth: '280px'
+            }}
+          >
+            <div className="flex items-center space-x-3">
+          
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{hoveredCase.full_name}</h4>
+                <div className="flex items-center space-x-2 mt-1">
+                  {(() => {
+                    const statusInfo = getStatusInfo(hoveredCase.status);
+                    const StatusIcon = statusInfo.icon;
+                    return (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
+                        <StatusIcon className="h-3 w-3 mr-1" />
+                        {statusInfo.label}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+            
+            {/* Tooltip Arrow */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+              <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white dark:border-t-gray-800"></div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

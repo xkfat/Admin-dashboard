@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle, AlertTriangle, X, ChevronLeft, ChevronRight, Filter, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import API from '../api';
 
-// Reusable Dialog Component - No decorative line
+// Reusable Dialog Component with dark theme
 const CustomDialog = ({ 
   isOpen, 
   onClose, 
@@ -22,35 +22,35 @@ const CustomDialog = ({
       case 'success':
         return {
           icon: CheckCircle,
-          iconColor: 'text-green-600',
-          iconBg: 'bg-green-100',
-          borderColor: 'border-green-200',
-          buttonColor: 'bg-green-600 hover:bg-green-700'
+          iconColor: 'text-green-600 dark:text-green-500',
+          iconBg: 'bg-green-100 dark:bg-green-900/20',
+          borderColor: 'border-green-200 dark:border-green-700',
+          buttonColor: 'bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600'
         };
       case 'error':
         return {
           icon: AlertCircle,
-          iconColor: 'text-red-600',
-          iconBg: 'bg-red-100',
-          borderColor: 'border-red-200',
-          buttonColor: 'bg-red-600 hover:bg-red-700'
+          iconColor: 'text-red-600 dark:text-red-500',
+          iconBg: 'bg-red-100 dark:bg-red-900/20',
+          borderColor: 'border-red-200 dark:border-red-700',
+          buttonColor: 'bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600'
         };
       case 'warning':
       case 'confirm':
         return {
           icon: AlertTriangle,
-          iconColor: 'text-yellow-600',
-          iconBg: 'bg-yellow-100',
-          borderColor: 'border-yellow-200',
-          buttonColor: 'bg-yellow-600 hover:bg-yellow-700'
+          iconColor: 'text-yellow-600 dark:text-yellow-500',
+          iconBg: 'bg-yellow-100 dark:bg-yellow-900/20',
+          borderColor: 'border-yellow-200 dark:border-yellow-700',
+          buttonColor: 'bg-yellow-600 dark:bg-yellow-700 hover:bg-yellow-700 dark:hover:bg-yellow-600'
         };
       default:
         return {
           icon: AlertCircle,
-          iconColor: 'text-findthem-teal',
-          iconBg: 'bg-findthem-light',
-          borderColor: 'border-findthem-teal',
-          buttonColor: 'bg-findthem-teal hover:bg-findthem-darkGreen'
+          iconColor: 'text-findthem-teal dark:text-findthem-light',
+          iconBg: 'bg-findthem-light dark:bg-findthem-teal/20',
+          borderColor: 'border-findthem-teal dark:border-findthem-light',
+          buttonColor: 'bg-findthem-teal dark:bg-findthem-light hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal'
         };
     }
   };
@@ -68,20 +68,20 @@ const CustomDialog = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl transform transition-all animate-in zoom-in duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl transform transition-all animate-in zoom-in duration-200 border dark:border-gray-700">
         
         {/* Header with Icon */}
-        <div className="bg-findthem-bg rounded-t-2xl p-6 text-center relative">
+        <div className="bg-findthem-bg dark:bg-findthem-teal rounded-t-2xl p-6 text-center relative">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
+            className="absolute top-4 right-4 text-white hover:text-gray-200 dark:hover:text-gray-300 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
           
           {/* Icon */}
-          <div className={`w-16 h-16 ${config.iconBg} rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg`}>
+          <div className={`w-16 h-16 ${config.iconBg} rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-gray-800 shadow-lg`}>
             <IconComponent className={`h-8 w-8 ${config.iconColor}`} />
           </div>
           
@@ -93,7 +93,7 @@ const CustomDialog = ({
         
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-700 text-center leading-relaxed mb-6">
+          <p className="text-gray-700 dark:text-gray-300 text-center leading-relaxed mb-6">
             {message}
           </p>
           
@@ -102,7 +102,7 @@ const CustomDialog = ({
             {showCancel && (
               <button
                 onClick={onClose}
-                className="px-6 py-3 bg-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-400 transition-colors min-w-[100px]"
+                className="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors min-w-[100px]"
               >
                 {cancelText}
               </button>
@@ -110,7 +110,7 @@ const CustomDialog = ({
             
             <button
               onClick={handleConfirm}
-              className={`px-6 py-3 ${config.buttonColor} text-white rounded-xl font-medium transition-colors min-w-[100px] shadow-lg`}
+              className={`px-6 py-3 ${config.buttonColor} text-white dark:text-gray-900 rounded-xl font-medium transition-colors min-w-[100px] shadow-lg`}
             >
               {confirmText}
             </button>
@@ -527,15 +527,15 @@ export default function Reports() {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'new':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400';
       case 'verified':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400';
       case 'false':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400';
       case 'unverified':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -554,27 +554,27 @@ export default function Reports() {
     return note.length > maxLength ? `${note.substring(0, maxLength)}...` : note;
   };
 
-  // Note Dialog with FindThem colors
+  // Note Dialog with FindThem colors and dark theme
   const NoteDialog = () => {
     if (!showNoteDialog || !selectedReport) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto border dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Report Note
             </h3>
             <button
               onClick={() => setShowNoteDialog(false)}
-              className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
           
-          <div className="bg-gray-50 p-4 rounded-lg border max-h-60 overflow-y-auto">
-            <p className="text-gray-900 whitespace-pre-wrap">
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border dark:border-gray-600 max-h-60 overflow-y-auto">
+            <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
               {selectedReport.note || 'No note provided'}
             </p>
           </div>
@@ -582,7 +582,7 @@ export default function Reports() {
           <div className="flex justify-end mt-6">
             <button
               onClick={() => setShowNoteDialog(false)}
-              className="bg-findthem-teal text-white py-2 px-4 rounded-lg hover:bg-findthem-darkGreen transition-colors"
+              className="bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 py-2 px-4 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors"
             >
               Close
             </button>
@@ -592,29 +592,29 @@ export default function Reports() {
     );
   };
 
-  // Simple No Reports Dialog
+  // Simple No Reports Dialog with dark theme
   const NoReportsDialog = () => {
     if (!showNoReportsDialog) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border dark:border-gray-700">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-findthem-button" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-findthem-button dark:text-findthem-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">
             No Reports Found
           </h3>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
             {dialogMessage}
           </p>
           <button
             onClick={() => setShowNoReportsDialog(false)}
-            className="w-full bg-findthem-teal text-white py-2 px-4 rounded-lg hover:bg-findthem-darkGreen transition-colors"
+            className="w-full bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 py-2 px-4 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors"
           >
             OK
           </button>
@@ -625,9 +625,9 @@ export default function Reports() {
 
   if (loading && reports.length === 0) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading reports...</div>
+          <div className="text-lg text-gray-600 dark:text-gray-300">Loading reports...</div>
         </div>
       </div>
     );
@@ -635,8 +635,8 @@ export default function Reports() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
           {error}
         </div>
       </div>
@@ -644,57 +644,57 @@ export default function Reports() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-blue-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('new')}
           >
-            <div className="text-2xl font-bold text-blue-600 my-2">{stats.new}</div>
-            <div className="text-sm text-gray-600 font-medium">New Reports</div>
-            <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-500 my-2">{stats.new}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">New Reports</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Awaiting review</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-green-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-green-400 dark:hover:border-green-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('verified')}
           >
-            <div className="text-2xl font-bold text-green-600 my-2">{stats.verified}</div>
-            <div className="text-sm text-gray-600 font-medium">Verified Reports</div>
-            <div className="text-xs text-gray-500 mt-1">Confirmed as valid</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-500 my-2">{stats.verified}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">Verified Reports</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Confirmed as valid</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-yellow-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-yellow-400 dark:hover:border-yellow-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('unverified')}
           >
-            <div className="text-2xl font-bold text-yellow-600 my-2">{stats.unverified}</div>
-            <div className="text-sm text-gray-600 font-medium">Unverified Reports</div>
-            <div className="text-xs text-gray-500 mt-1">Need verification</div>
+            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-500 my-2">{stats.unverified}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">Unverified Reports</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Need verification</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-red-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-red-400 dark:hover:border-red-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('false')}
           >
-            <div className="text-2xl font-bold text-red-600 my-2">{stats.false}</div>
-            <div className="text-sm text-gray-600 font-medium">False Reports</div>
-            <div className="text-xs text-gray-500 mt-1">Marked as false</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-500 my-2">{stats.false}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">False Reports</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Marked as false</div>
           </div>
         </div>
 
         {/* Search and Filters - UPDATED WITH COLLAPSIBLE FILTERS */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
           {/* Search Bar with Filter Button */}
           <div className="flex gap-4 mb-4">
           <div className="flex-1">
   <div className="relative">
-    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
     <input
       type="text"
-      className="w-full pl-10 pr-4 py-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+      className="w-full pl-10 pr-4 py-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
       placeholder="Search by missing person, reporter, or report ID"
       value={filters.search}
       onChange={(e) => handleFilterChange('search', e.target.value)}
@@ -705,16 +705,16 @@ export default function Reports() {
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-6 py-4 border rounded-lg font-medium transition-all ${
                 showFilters 
-                  ? 'bg-findthem-teal text-white border-findthem-teal' 
+                  ? 'bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 border-findthem-teal dark:border-findthem-light' 
                   : hasActiveFilters() 
-                    ? 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100' 
-                    : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30' 
+                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
               }`}
             >
               <Filter className="h-4 w-4" />
               <span>Filters</span>
               {hasActiveFilters() && (
-                <span className="bg-findthem-lightteal text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                <span className="bg-findthem-lightteal dark:bg-findthem-teal text-white text-xs rounded-full px-2 py-0.5 ml-1">
                   {Object.values(filters).filter(v => v && v !== filters.search).length}
                 </span>
               )}
@@ -724,10 +724,10 @@ export default function Reports() {
 
           {/* Collapsible Filters */}
           {showFilters && (
-            <div className="border-t pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
+            <div className="border-t dark:border-gray-600 pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
               <div className="flex flex-col md:flex-row gap-4 justify-end items-center">
                 <select
-                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                 >
@@ -740,7 +740,7 @@ export default function Reports() {
 
                 <input
                   type="date"
-                  className="p-3 border rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg w-full md:w-auto focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   value={filters.dateStart}
                   onChange={(e) => handleFilterChange('dateStart', e.target.value)}
                   max={getTodayDate()}
@@ -748,7 +748,7 @@ export default function Reports() {
                 />
 
                 <button
-                  className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 w-full md:w-auto transition-colors"
+                  className="bg-gray-500 dark:bg-gray-600 text-white p-3 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 w-full md:w-auto transition-colors"
                   onClick={clearAllFilters}
                 >
                   Clear All
@@ -759,8 +759,8 @@ export default function Reports() {
         </div>
 
         {/* Reports Table - No ID column */}
-        <div id="reports-table" className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
+        <div id="reports-table" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
+          <div className="p-6 border-b dark:border-gray-600 bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-xl font-bold">Reports Management</div>
@@ -770,27 +770,27 @@ export default function Reports() {
 
           {/* Bulk Actions */}
           {selectedReports.length > 0 && (
-            <div className="p-4 bg-findthem-light border-b flex justify-between items-center">
-              <div className="font-semibold">
+            <div className="p-4 bg-findthem-light dark:bg-findthem-teal/20 border-b dark:border-gray-600 flex justify-between items-center">
+              <div className="font-semibold text-gray-900 dark:text-white">
                 {selectedReports.length} reports selected
               </div>
               <div className="flex space-x-3">
                 <button
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                  className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                   onClick={() => handleBulkStatusChange('verified')}
                   disabled={loading}
                 >
                   Mark as Verified
                 </button>
                 <button
-                  className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
+                  className="bg-yellow-600 dark:bg-yellow-700 text-white px-4 py-2 rounded hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors"
                   onClick={() => handleBulkStatusChange('unverified')}
                   disabled={loading}
                 >
                   Mark as Unverified
                 </button>
                 <button
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                  className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 rounded hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
                   onClick={() => handleBulkStatusChange('false')}
                   disabled={loading}
                 >
@@ -803,28 +803,28 @@ export default function Reports() {
           {/* Table - No ID column, changed Actions to Details */}
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 sticky top-0">
+              <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
                 <tr>
                   <th className="p-4 text-left">
                     <input
                       type="checkbox"
                       checked={selectedReports.length === currentReports.length && currentReports.length > 0}
                       onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
+                      className="rounded border-gray-300 dark:border-gray-600 text-findthem-teal focus:ring-findthem-teal dark:bg-gray-700"
                     />
                   </th>
-                  <th className="p-4 text-left">Reporter</th>
-                  <th className="p-4 text-left">Missing Person</th>
-                  <th className="p-4 text-left">Report Status</th>
-                  <th className="p-4 text-left">Note Preview</th>
-                  <th className="p-4 text-left">Date Submitted</th>
-                  <th className="p-4 text-left">Details</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Reporter</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Missing Person</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Report Status</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Note Preview</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Date Submitted</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Details</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white dark:bg-gray-800">
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="p-8 text-center text-gray-500">
+                    <td colSpan="7" className="p-8 text-center text-gray-500 dark:text-gray-400">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-findthem-teal mr-3"></div>
                         Loading reports...
@@ -833,8 +833,8 @@ export default function Reports() {
                   </tr>
                 ) : currentReports.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="p-8 text-center text-gray-500">
-                      <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <td colSpan="7" className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      <svg className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                       </svg>
                       <p className="text-lg font-medium">
@@ -843,7 +843,7 @@ export default function Reports() {
                           'No reports found.'
                         }
                       </p>
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                         {Object.values(filters).some(f => f) 
                           ? 'No reports found matching your criteria.' 
                           : 'No reports have been submitted yet.'
@@ -853,20 +853,20 @@ export default function Reports() {
                   </tr>
                 ) : (
                   currentReports.map((report) => (
-                    <tr key={report.id} className="border-b hover:bg-gray-50 transition-colors">
+                    <tr key={report.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="p-4">
                         <input
                           type="checkbox"
                           checked={selectedReports.includes(report.id)}
                           onChange={() => handleSelectReport(report.id)}
-                          className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
+                          className="rounded border-gray-300 dark:border-gray-600 text-findthem-teal focus:ring-findthem-teal dark:bg-gray-700"
                         />
                       </td>
-                      <td className="p-4">{report.reporter || 'Anonymous'}</td>
+                      <td className="p-4 text-gray-900 dark:text-white">{report.reporter || 'Anonymous'}</td>
                       <td className="p-4">
                         <button
                           onClick={() => handleCaseClick(report.missing_person)}
-                          className="text-findthem-teal hover:text-findthem-darkGreen hover:underline cursor-pointer font-medium transition-colors"
+                          className="text-findthem-teal dark:text-findthem-light hover:text-findthem-darkGreen dark:hover:text-findthem-teal hover:underline cursor-pointer font-medium transition-colors"
                         >
                           {report.missing_person_name || `Case #${report.missing_person}`}
                         </button>
@@ -877,15 +877,15 @@ export default function Reports() {
                         </span>
                       </td>
                       <td className="p-4 max-w-xs">
-                        <div className="truncate" title={report.note}>
+                        <div className="truncate text-gray-900 dark:text-white" title={report.note}>
                           {truncateNote(report.note)}
                         </div>
                       </td>
-                      <td className="p-4">{formatDate(report.date_submitted)}</td>
+                      <td className="p-4 text-gray-900 dark:text-white">{formatDate(report.date_submitted)}</td>
                       <td className="p-4">
                         <button
                           onClick={() => handleViewNote(report)}
-                          className="bg-findthem-teal text-white px-3 py-1 rounded text-sm hover:bg-findthem-darkGreen transition-colors"
+                          className="bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 px-3 py-1 rounded text-sm hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors"
                         >
                           View Note
                         </button>
@@ -899,10 +899,10 @@ export default function Reports() {
 
           {/* Simple Pagination - Only Previous/Next */}
           {totalPages > 1 && (
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
               <div className="flex items-center justify-between">
                 {/* Pagination Info */}
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   Showing {startIndex + 1} to {Math.min(endIndex, filteredReports.length)} of {filteredReports.length} reports
                 </div>
 
@@ -912,14 +912,14 @@ export default function Reports() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Previous
                   </button>
 
                   {/* Current Page Info */}
-                  <span className="text-sm text-gray-600 font-medium">
+                  <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                     Page {currentPage} of {totalPages}
                   </span>
 
@@ -927,7 +927,7 @@ export default function Reports() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     Next
                     <ChevronRight className="h-4 w-4 ml-1" />

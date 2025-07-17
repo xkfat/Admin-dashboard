@@ -550,21 +550,21 @@ const fetchDashboardStats = async () => {
   // Get status badge colors - UPDATED COLORS
   const getStatusBadgeColor = (status) => {
     switch (status) {
-      case 'missing': return 'bg-red-100 text-red-800';
-      case 'found': return 'bg-green-100 text-green-800'; // Like found color
-      case 'under_investigation': return 'bg-yellow-100 text-yellow-800'; // Like investigating color
-      default: return 'bg-gray-100 text-gray-800';
+      case 'missing': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      case 'found': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'under_investigation': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
   // UPDATED submission status colors
   const getSubmissionStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'bg-red-100 text-red-800'; // Red background like missing
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800'; // Yellow like investigating
-      case 'closed': return 'bg-green-100 text-green-800'; // Green like found
-      case 'rejected': return 'bg-gray-100 text-gray-800'; // Grey
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      case 'in_progress': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      case 'closed': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'rejected': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -576,78 +576,78 @@ const fetchDashboardStats = async () => {
         {/* Stats Cards - Updated to Case Status Focus */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-blue-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg cursor-pointer"
             onClick={clearAllFilters}
           >
-            <div className="text-2xl font-bold text-blue-600 my-2">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 my-2">
               {statsLoading ? '...' : stats.total}
             </div>
-            <div className="text-sm text-gray-600 font-medium">All Cases</div>
-            <div className="text-xs text-gray-500 mt-1">Total cases reported</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">All Cases</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total cases reported</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-red-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-red-400 dark:hover:border-red-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('status', 'missing')}
           >
-            <div className="text-2xl font-bold text-red-600 my-2">
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400 my-2">
               {statsLoading ? '...' : stats.missing}
             </div>
-            <div className="text-sm text-gray-600 font-medium">Missing Cases</div>
-            <div className="text-xs text-gray-500 mt-1">Still searching</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">Missing Cases</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Still searching</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-yellow-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-yellow-400 dark:hover:border-yellow-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('status', 'under_investigation')}
           >
-            <div className="text-2xl font-bold text-yellow-600 my-2">
+            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 my-2">
               {statsLoading ? '...' : stats.investigating}
             </div>
-            <div className="text-sm text-gray-600 font-medium">Investigating Cases</div>
-            <div className="text-xs text-gray-500 mt-1">Under investigation</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">Investigating Cases</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Under investigation</div>
           </div>
           
           <div 
-            className="bg-white border-radius-15 p-6 text-center border border-gray-200 rounded-lg transition-all hover:border-green-400 hover:shadow-lg cursor-pointer"
+            className="bg-white dark:bg-gray-800 border-radius-15 p-6 text-center border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:border-green-400 dark:hover:border-green-500 hover:shadow-lg cursor-pointer"
             onClick={() => handleStatsCardClick('status', 'found')}
           >
-            <div className="text-2xl font-bold text-green-600 my-2">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400 my-2">
               {statsLoading ? '...' : stats.found}
             </div>
-            <div className="text-sm text-gray-600 font-medium">Found Cases</div>
-            <div className="text-xs text-gray-500 mt-1">Successfully resolved</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">Found Cases</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Successfully resolved</div>
           </div>
         </div>
 
         {/* Search and Filter Section - UPDATED WITH COLLAPSIBLE FILTERS */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
           {/* Search Bar with Filter Button */}
           <div className="flex gap-4 mb-4">
-         <div className="relative flex-1">
-  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-  <input
-    type="text"
-    className="w-full pl-10 pr-4 py-4 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-    placeholder="Search by name, location, or case ID..."
-    value={filters.search}
-    onChange={(e) => handleFilterChange('search', e.target.value)}
-  />
-</div>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
+              <input
+                type="text"
+                className="w-full pl-10 pr-4 py-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Search by name, location, or case ID..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+            </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-6 py-4 border rounded-lg font-medium transition-all ${
                 showFilters 
-                  ? 'bg-findthem-teal text-white border-findthem-teal' 
+                  ? 'bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 border-findthem-teal dark:border-findthem-light' 
                   : hasActiveFilters() 
-                    ? 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100' 
-                    : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30' 
+                    : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
               }`}
             >
               <Filter className="h-4 w-4" />
               <span>Filters</span>
               {hasActiveFilters() && (
-                <span className="bg-findthem-lightteal text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                <span className="bg-findthem-lightteal dark:bg-findthem-teal text-white text-xs rounded-full px-2 py-0.5 ml-1">
                   {Object.values(filters).filter(v => v && v !== filters.search).length}
                 </span>
               )}
@@ -657,10 +657,10 @@ const fetchDashboardStats = async () => {
 
           {/* Collapsible Filters */}
           {showFilters && (
-            <div className="border-t pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
+            <div className="border-t dark:border-gray-600 pt-4 mt-4 animate-in slide-in-from-top-2 duration-200">
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <select 
-                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal" 
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white" 
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
                 >
@@ -670,7 +670,7 @@ const fetchDashboardStats = async () => {
                   <option value="under_investigation">Investigating</option>
                 </select>
                 <select 
-                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   value={filters.submission_status}
                   onChange={(e) => handleFilterChange('submission_status', e.target.value)}
                 >
@@ -681,7 +681,7 @@ const fetchDashboardStats = async () => {
                   <option value="rejected">Rejected</option>
                 </select>
                 <select 
-                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   value={filters.gender}
                   onChange={(e) => handleFilterChange('gender', e.target.value)}
                 >
@@ -691,34 +691,25 @@ const fetchDashboardStats = async () => {
                 </select>
                 <input
                   type="number"
-                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
-                  placeholder="Min Age"
-                  value={filters.age_min}
-                  onChange={(e) => handleFilterChange('age_min', e.target.value)}
-                />
-                <input
-                  type="number"
-                  className="p-3 border rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Max Age"
                   value={filters.age_max}
                   onChange={(e) => handleFilterChange('age_max', e.target.value)}
                 />
                 <button
-                  className="bg-gray-500 text-white p-3 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="bg-gray-500 dark:bg-gray-600 text-white p-3 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors"
                   onClick={clearAllFilters}
                 >
                   Clear All
                 </button>
               </div>
-              
-         
             </div>
           )}
         </div>
 
         {/* Cases Table */}
-        <div id="cases-table" className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
+        <div id="cases-table" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
+          <div className="p-6 border-b dark:border-gray-600 bg-gradient-to-br from-findthem-teal via-findthem-teal to-findthem-darkGreen text-white">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-xl font-bold">Cases Management</div>
@@ -728,18 +719,18 @@ const fetchDashboardStats = async () => {
 
           {/* Updated Bulk Actions - Dropdowns + Delete */}
           {selectedCases.size > 0 && (
-            <div className="p-4 bg-findthem-light border-b">
+            <div className="p-4 bg-findthem-light dark:bg-findthem-teal/20 border-b dark:border-gray-600">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="font-semibold">
+                <div className="font-semibold text-gray-900 dark:text-white">
                   {selectedCases.size} cases selected
                 </div>
                 
                 <div className="flex flex-wrap gap-3 items-center">
                   {/* Case Status Dropdown - Clean Options */}
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Case Status:</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Case Status:</label>
                     <select
-                      className="p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                      className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       onChange={(e) => {
                         if (e.target.value) {
                           bulkCaseStatusChange(e.target.value);
@@ -757,9 +748,9 @@ const fetchDashboardStats = async () => {
 
                   {/* Submission Status Dropdown - Clean Options */}
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Submission Status:</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Submission Status:</label>
                     <select
-                      className="p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal"
+                      className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-findthem-teal focus:border-findthem-teal bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       onChange={(e) => {
                         if (e.target.value) {
                           bulkCaseSubmissionChange(e.target.value);
@@ -778,7 +769,7 @@ const fetchDashboardStats = async () => {
 
                   {/* Delete Cases Button */}
                   <button
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors flex items-center gap-2 font-medium"
+                    className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 dark:hover:bg-red-600 transition-colors flex items-center gap-2 font-medium"
                     onClick={bulkDeleteCases}
                     disabled={loading}
                   >
@@ -795,30 +786,30 @@ const fetchDashboardStats = async () => {
           {/* Table - UPDATED COLUMNS */}
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="p-4 text-left">
                     <input
                       type="checkbox"
                       checked={displayedCases.length > 0 && selectedCases.size === displayedCases.length}
                       onChange={toggleSelectAll}
-                      className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
+                      className="rounded border-gray-300 dark:border-gray-600 text-findthem-teal focus:ring-findthem-teal dark:bg-gray-700"
                     />
                   </th>
-                  <th className="p-4 text-left">Photo</th>
-                  <th className="p-4 text-left">Full Name</th>
-                  <th className="p-4 text-left">Age</th>
-                  <th className="p-4 text-left">Case Status</th>
-                  <th className="p-4 text-left">Submission Status</th>
-                  <th className="p-4 text-left">Last Seen Location</th>
-                  <th className="p-4 text-left">Last Seen Date</th>
-                  <th className="p-4 text-left">Days Missing</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Photo</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Full Name</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Age</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Case Status</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Submission Status</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Last Seen Location</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Last Seen Date</th>
+                  <th className="p-4 text-left text-gray-900 dark:text-white">Days Missing</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white dark:bg-gray-800">
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="p-8 text-center text-gray-500">
+                    <td colSpan="9" className="p-8 text-center text-gray-500 dark:text-gray-400">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-findthem-teal mr-3"></div>
                         Loading cases...
@@ -827,12 +818,12 @@ const fetchDashboardStats = async () => {
                   </tr>
                 ) : displayedCases.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="p-8 text-center text-gray-500">
-                      <svg className="h-12 w-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <td colSpan="9" className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      <svg className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                       </svg>
                       <p className="text-lg font-medium">No cases found</p>
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                         {Object.values(filters).some(f => f) 
                           ? 'No cases found matching your criteria.' 
                           : 'No cases have been submitted yet.'
@@ -842,20 +833,20 @@ const fetchDashboardStats = async () => {
                   </tr>
                 ) : (
                   displayedCases.map((case_item) => (
-                    <tr key={case_item.id} className="border-b hover:bg-gray-50 transition-colors">
+                    <tr key={case_item.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="p-4">
                         <input
                           type="checkbox"
                           checked={selectedCases.has(case_item.id)}
                           onChange={() => toggleCaseSelection(case_item.id)}
-                          className="rounded border-gray-300 text-findthem-teal focus:ring-findthem-teal"
+                          className="rounded border-gray-300 dark:border-gray-600 text-findthem-teal focus:ring-findthem-teal dark:bg-gray-700"
                         />
                       </td>
                       <td className="p-4">
                         <img
                           src={case_item.photo}
                           alt={case_item.full_name}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                           onError={(e) => {
                             e.target.src = '/api/placeholder/48/48';
                           }}
@@ -864,12 +855,12 @@ const fetchDashboardStats = async () => {
                       <td className="p-4">
                         <button
                           onClick={() => handleCaseClick(case_item.id)}
-                          className="font-medium text-findthem-teal hover:text-findthem-darkGreen hover:underline transition-colors text-left"
+                          className="font-medium text-findthem-teal dark:text-findthem-light hover:text-findthem-darkGreen dark:hover:text-findthem-teal hover:underline transition-colors text-left"
                         >
                           {case_item.full_name}
                         </button>
                       </td>
-                      <td className="p-4">{case_item.current_age}</td>
+                      <td className="p-4 text-gray-900 dark:text-white">{case_item.current_age}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(case_item.status)}`}>
                           {case_item.status === 'under_investigation' ? 'investigating' : case_item.status.replace('_', ' ')}
@@ -880,11 +871,11 @@ const fetchDashboardStats = async () => {
                           {case_item.submission_status.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="p-4 max-w-xs truncate" title={case_item.last_seen_location}>
+                      <td className="p-4 max-w-xs truncate text-gray-900 dark:text-white" title={case_item.last_seen_location}>
                         {case_item.last_seen_location}
                       </td>
-                      <td className="p-4">{formatDate(case_item.last_seen_date)}</td>
-                      <td className="p-4">{calculateDaysMissing(case_item.last_seen_date)} days</td>
+                      <td className="p-4 text-gray-900 dark:text-white">{formatDate(case_item.last_seen_date)}</td>
+                      <td className="p-4 text-gray-900 dark:text-white">{calculateDaysMissing(case_item.last_seen_date)} days</td>
                     </tr>
                   ))
                 )}
@@ -894,9 +885,9 @@ const fetchDashboardStats = async () => {
 
           {/* Simplified Pagination - Only Next/Previous */}
           {totalPages > 1 && (
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   Showing {startIndex + 1} to {Math.min(endIndex, totalCount)} of {totalCount} cases
                 </div>
 
@@ -906,14 +897,14 @@ const fetchDashboardStats = async () => {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Previous
                   </button>
 
                   {/* Current Page Info */}
-                  <span className="text-sm text-gray-600 font-medium">
+                  <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                     Page {currentPage} of {totalPages}
                   </span>
 
@@ -921,7 +912,7 @@ const fetchDashboardStats = async () => {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                   >
                     Next
                     <ChevronRight className="h-4 w-4 ml-1" />
@@ -933,8 +924,8 @@ const fetchDashboardStats = async () => {
 
           {/* Error Message */}
           {error && (
-            <div className="p-4 border-t bg-red-50">
-              <div className="text-red-700 text-sm flex items-center">
+            <div className="p-4 border-t dark:border-gray-600 bg-red-50 dark:bg-red-900/20">
+              <div className="text-red-700 dark:text-red-300 text-sm flex items-center">
                 <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
                 </svg>
@@ -947,44 +938,44 @@ const fetchDashboardStats = async () => {
         {/* Custom Dialog Component */}
         {dialog.isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border dark:border-gray-700">
               <div className="flex items-center mb-4">
                 {dialog.type === 'success' && (
-                  <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                    <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="h-8 w-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                   </div>
                 )}
                 {dialog.type === 'error' && (
-                  <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                    <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="h-8 w-8 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                   </div>
                 )}
                 {dialog.type === 'warning' && (
-                  <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                    <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="h-8 w-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
                   </div>
                 )}
                 {dialog.type === 'confirm' && (
-                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-3">
+                    <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                   </div>
                 )}
-                <h3 className="text-lg font-medium text-gray-900">{dialog.title}</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{dialog.title}</h3>
               </div>
-              <p className="text-gray-600 mb-6">{dialog.message}</p>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">{dialog.message}</p>
               <div className="flex justify-end space-x-3">
                 {dialog.showCancel && (
                   <button
                     onClick={closeDialog}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
                     {dialog.cancelText}
                   </button>
@@ -999,8 +990,8 @@ const fetchDashboardStats = async () => {
                   }}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     dialog.type === 'error' || dialog.type === 'warning'
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-findthem-teal text-white hover:bg-findthem-darkGreen'
+                      ? 'bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600'
+                      : 'bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal'
                   }`}
                 >
                   {dialog.confirmText}

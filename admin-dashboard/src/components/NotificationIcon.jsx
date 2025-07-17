@@ -301,17 +301,17 @@ const NotificationIcon = () => {
     setIsOpen(false);
   };
 
-  // Get notification icon based on type
+  // Get notification icon based on type with dark theme support
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'missing_person':
-        return <Users className="h-4 w-4 text-blue-600" />;
+        return <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case 'report':
-        return <FileText className="h-4 w-4 text-green-600" />;
+        return <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'system':
-        return <Bot className="h-4 w-4 text-purple-600" />;
+        return <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       default:
-        return <Bell className="h-4 w-4 text-gray-600" />;
+        return <Bell className="h-4 w-4 text-gray-600 dark:text-gray-400" />;
     }
   };
 
@@ -372,7 +372,7 @@ const NotificationIcon = () => {
           setIsOpen(!isOpen);
           if (!isOpen) fetchNotifications();
         }}
-        className={`notification-bell-button relative p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200 ${
+        className={`notification-bell-button relative p-2 rounded-lg hover:bg-white hover:bg-opacity-20 dark:hover:bg-gray-700 dark:hover:bg-opacity-50 transition-all duration-200 ${
           unreadCount > 0 ? 'animate-pulse' : ''
         }`}
         title={unreadCount > 0 ? `${unreadCount} new notification${unreadCount !== 1 ? 's' : ''}` : 'Notifications'}
@@ -389,25 +389,25 @@ const NotificationIcon = () => {
             <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-40 scale-125" style={{animationDelay: '0.5s'}}></div>
             
             {/* Main notification badge */}
-            <div className="relative bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center shadow-lg border-2 border-white px-1">
+            <div className="relative bg-gradient-to-br from-red-500 to-red-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800 px-1">
               {unreadCount > 99 ? '99+' : unreadCount}
             </div>
           </div>
         )}
       </button>
 
-      {/* Dropdown Menu - BIGGER SIZE */}
+      {/* Dropdown Menu - BIGGER SIZE with Dark Theme */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[500px] bg-white rounded-lg shadow-xl border border-gray-200 z-50 flex flex-col max-h-[600px]">
+        <div className="absolute right-0 mt-2 w-[500px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 flex flex-col max-h-[600px]">
           {/* Header */}
-          <div className="bg-findthem-bg text-white p-4 rounded-t-lg flex-shrink-0">
+          <div className="bg-findthem-bg dark:bg-findthem-teal text-white p-4 rounded-t-lg flex-shrink-0">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Admin Notifications</h3>
               <div className="flex items-center space-x-2">
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-white hover:text-gray-200 transition-colors p-1"
+                    className="text-white hover:text-gray-200 dark:hover:text-gray-300 transition-colors p-1"
                     title="Mark all as read"
                   >
                     <Check className="h-4 w-4" />
@@ -416,7 +416,7 @@ const NotificationIcon = () => {
                 {notifications.length > 0 && (
                   <button
                     onClick={clearAllNotifications}
-                    className="text-white hover:text-gray-200 transition-colors p-1"
+                    className="text-white hover:text-gray-200 dark:hover:text-gray-300 transition-colors p-1"
                     title="Clear all notifications"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -424,14 +424,14 @@ const NotificationIcon = () => {
                 )}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-white hover:text-gray-200 transition-colors p-1"
+                  className="text-white hover:text-gray-200 dark:hover:text-gray-300 transition-colors p-1"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
             {unreadCount > 0 && (
-              <p className="text-findthem-light text-sm mt-1">
+              <p className="text-findthem-light dark:text-findthem-light text-sm mt-1">
                 {unreadCount} new notification{unreadCount !== 1 ? 's' : ''}
               </p>
             )}
@@ -441,20 +441,20 @@ const NotificationIcon = () => {
           <div className="flex-1 overflow-y-auto min-h-0">
             {loading ? (
               <div className="p-4 text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-findthem-button mx-auto"></div>
-                <p className="text-sm text-gray-500 mt-2">Loading...</p>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-findthem-button dark:border-findthem-light mx-auto"></div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Loading...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                 <p className="text-sm">No notifications yet</p>
               </div>
             ) : (
               notifications.slice(0, 3).map((notification) => ( // Show only 3 notifications
                 <div
                   key={notification.id}
-                  className={`group p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    !notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                  className={`group p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    !notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500 dark:border-l-blue-400' : ''
                   }`}
                 >
                   <div className="flex items-start space-x-3">
@@ -465,10 +465,10 @@ const NotificationIcon = () => {
                       className="flex-1 min-w-0 cursor-pointer"
                       onClick={() => handleNotificationClick(notification)}
                     >
-                      <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                      <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {formatRelativeTime(notification.date_created)}
                       </p>
                     </div>
@@ -478,7 +478,7 @@ const NotificationIcon = () => {
                       {!notification.is_read && (
                         <button
                           onClick={(e) => markAsRead(notification.id, e)}
-                          className="text-blue-500 hover:text-blue-600 p-1"
+                          className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 p-1"
                           title="Mark as read"
                         >
                           <Eye className="h-3 w-3" />
@@ -486,7 +486,7 @@ const NotificationIcon = () => {
                       )}
                       <button
                         onClick={(e) => deleteNotification(notification.id, e)}
-                        className="text-red-500 hover:text-red-600 p-1"
+                        className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 p-1"
                         title="Delete notification"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -496,7 +496,7 @@ const NotificationIcon = () => {
                     {/* Unread indicator */}
                     {!notification.is_read && (
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
                       </div>
                     )}
                   </div>
@@ -506,13 +506,13 @@ const NotificationIcon = () => {
           </div>
 
           {/* Footer - Always visible */}
-          <div className="p-3 bg-gray-50 border-t flex-shrink-0 rounded-b-lg">
+          <div className="p-3 bg-gray-50 dark:bg-gray-700 border-t dark:border-gray-600 flex-shrink-0 rounded-b-lg">
             <button
               onClick={() => {
                 navigate('/notifications');
                 setIsOpen(false);
               }}
-              className="w-full text-center text-findthem-button hover:text-findthem-darkGreen font-medium text-sm py-2 hover:bg-findthem-light rounded-lg transition-colors"
+              className="w-full text-center text-findthem-button dark:text-findthem-light hover:text-findthem-darkGreen dark:hover:text-findthem-teal font-medium text-sm py-2 hover:bg-findthem-light dark:hover:bg-findthem-teal/20 rounded-lg transition-colors"
             >
               View All Notifications
             </button>

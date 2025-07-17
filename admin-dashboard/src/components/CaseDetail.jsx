@@ -223,30 +223,30 @@ export default function CaseDetail() {
     switch (status) {
       case 'missing':
         return { 
-          bg: 'bg-red-100', 
-          text: 'text-red-800',
-          border: 'border-red-200',
+          bg: 'bg-red-100 dark:bg-red-900/30', 
+          text: 'text-red-800 dark:text-red-300',
+          border: 'border-red-200 dark:border-red-700',
           icon: AlertCircle
         };
       case 'found':
         return { 
-          bg: 'bg-green-100', 
-          text: 'text-green-800',
-          border: 'border-green-200',
+          bg: 'bg-green-100 dark:bg-green-900/30', 
+          text: 'text-green-800 dark:text-green-300',
+          border: 'border-green-200 dark:border-green-700',
           icon: CheckCircle
         };
       case 'under_investigation':
         return { 
-          bg: 'bg-yellow-100', 
-          text: 'text-yellow-800',
-          border: 'border-yellow-200',
+          bg: 'bg-yellow-100 dark:bg-yellow-900/30', 
+          text: 'text-yellow-800 dark:text-yellow-300',
+          border: 'border-yellow-200 dark:border-yellow-700',
           icon: Clock
         };
       default:
         return { 
-          bg: 'bg-gray-100', 
-          text: 'text-gray-800',
-          border: 'border-gray-200',
+          bg: 'bg-gray-100 dark:bg-gray-700', 
+          text: 'text-gray-800 dark:text-gray-300',
+          border: 'border-gray-200 dark:border-gray-600',
           icon: AlertCircle
         };
     }
@@ -255,15 +255,15 @@ export default function CaseDetail() {
   const getSubmissionStatusConfig = (status) => {
     switch (status) {
       case 'active':
-        return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200' };
+        return { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', border: 'border-red-200 dark:border-red-700' };
       case 'in_progress':
-        return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200' };
+        return { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', border: 'border-yellow-200 dark:border-yellow-700' };
       case 'closed':
-        return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200' };
+        return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', border: 'border-green-200 dark:border-green-700' };
       case 'rejected':
-        return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-200' };
+        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-600' };
       default:
-        return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-200' };
+        return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-600' };
     }
   };
 
@@ -277,12 +277,12 @@ export default function CaseDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-findthem-teal border-t-transparent mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading case details...</p>
+              <p className="text-gray-600 dark:text-gray-300 font-medium">Loading case details...</p>
             </div>
           </div>
         </div>
@@ -292,11 +292,11 @@ export default function CaseDetail() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-6 py-4 rounded-lg">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 mr-3 text-red-500" />
+              <AlertCircle className="h-5 w-5 mr-3 text-red-500 dark:text-red-400" />
               <span className="font-medium">{error}</span>
             </div>
           </div>
@@ -307,10 +307,10 @@ export default function CaseDetail() {
 
   if (!caseData) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">Case not found</p>
+            <p className="text-gray-500 dark:text-gray-400 text-lg">Case not found</p>
           </div>
         </div>
       </div>
@@ -322,14 +322,14 @@ export default function CaseDetail() {
   const submissionConfig = getSubmissionStatusConfig(editData.submission_status || caseData.submission_status);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="flex items-center justify-between bg-white rounded-lg p-6 shadow-sm border">
+        <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border dark:border-gray-700">
           <button
             onClick={handleBackNavigation}
-            className="flex items-center gap-2 text-gray-600 hover:text-findthem-teal transition-colors"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-findthem-teal dark:hover:text-findthem-light transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
             <span className="font-medium">Back</span>
@@ -339,7 +339,7 @@ export default function CaseDetail() {
             {!isEditing ? (
               <button
                 onClick={handleEdit}
-                className="flex items-center gap-2 bg-findthem-teal text-white px-6 py-3 rounded-lg hover:bg-findthem-darkGreen transition-colors"
+                className="flex items-center gap-2 bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 px-6 py-3 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors"
               >
                 <Edit className="h-4 w-4" />
                 Edit Case
@@ -348,7 +348,7 @@ export default function CaseDetail() {
               <div className="flex gap-3">
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-2 bg-gray-500 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors"
                 >
                   <X className="h-4 w-4" />
                   Cancel
@@ -356,7 +356,7 @@ export default function CaseDetail() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-2 bg-findthem-teal text-white px-4 py-2 rounded-lg hover:bg-findthem-darkGreen transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 px-4 py-2 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors disabled:opacity-50"
                 >
                   <Save className="h-4 w-4" />
                   {saving ? 'Saving...' : 'Save'}
@@ -367,14 +367,14 @@ export default function CaseDetail() {
         </div>
 
         {/* Profile Header Section */}
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 overflow-hidden">
           <div className="p-8">
             <div className="flex flex-col lg:flex-row items-start gap-8">
               
               {/* Photo Section */}
               <div className="flex-shrink-0">
                 <div className="relative">
-                  <div className="w-40 h-40 rounded-lg overflow-hidden border-2 border-gray-200">
+                  <div className="w-40 h-40 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600">
                     <img
                       src={photoPreview || '/default-avatar.png'}
                       alt={caseData.full_name}
@@ -383,7 +383,7 @@ export default function CaseDetail() {
                     />
                   </div>
                   {isEditing && (
-                    <label className="absolute -bottom-2 -right-2 bg-findthem-teal hover:bg-findthem-darkGreen text-white rounded-full p-2 cursor-pointer transition-colors">
+                    <label className="absolute -bottom-2 -right-2 bg-findthem-teal dark:bg-findthem-light hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal text-white dark:text-gray-900 rounded-full p-2 cursor-pointer transition-colors">
                       <Upload className="h-4 w-4" />
                       <input
                         type="file"
@@ -410,19 +410,19 @@ export default function CaseDetail() {
                       type="text"
                       value={editData.first_name || ''}
                       onChange={(e) => handleInputChange('first_name', e.target.value)}
-                      className="text-2xl font-bold p-3 border border-gray-300 rounded-lg focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20"
+                      className="text-2xl font-bold p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="First Name"
                     />
                     <input
                       type="text"
                       value={editData.last_name || ''}
                       onChange={(e) => handleInputChange('last_name', e.target.value)}
-                      className="text-2xl font-bold p-3 border border-gray-300 rounded-lg focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20"
+                      className="text-2xl font-bold p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="Last Name"
                     />
                   </div>
                 ) : (
-                  <h1 className="text-4xl font-bold text-gray-900">
+                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
                     {caseData.full_name}
                   </h1>
                 )}
@@ -430,37 +430,37 @@ export default function CaseDetail() {
                 {/* Status Pills Row */}
                 <div className="flex flex-wrap gap-4">
                   {/* Age */}
-                  <div className="bg-gray-100 border border-gray-200 px-4 py-2 rounded-lg">
+                  <div className="bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg">
                     {isEditing ? (
                       <input
                         type="number"
                         value={editData.age || ''}
                         onChange={(e) => handleInputChange('age', e.target.value)}
-                        className="w-16 bg-transparent text-gray-900 text-center border-none outline-none font-medium"
+                        className="w-16 bg-transparent text-gray-900 dark:text-white text-center border-none outline-none font-medium"
                         min="0"
                         max="150"
                       />
                     ) : (
-                      <span className="text-gray-900 font-medium">{caseData.current_age} years old</span>
+                      <span className="text-gray-900 dark:text-white font-medium">{caseData.current_age} years old</span>
                     )}
                   </div>
 
                   {/* Gender */}
-                  <div className="bg-gray-100 border border-gray-200 px-4 py-2 rounded-lg">
+                  <div className="bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg">
                     {isEditing ? (
                       <div className="relative">
                         <select
                           value={editData.gender || ''}
                           onChange={(e) => handleInputChange('gender', e.target.value)}
-                          className="appearance-none bg-transparent text-gray-900 border-none outline-none font-medium pr-6 cursor-pointer"
+                          className="appearance-none bg-transparent text-gray-900 dark:text-white border-none outline-none font-medium pr-6 cursor-pointer"
                         >
                           <option value="Male">Male</option>
                           <option value="Female">Female</option>
                         </select>
-                        <ChevronDown className="absolute right-0 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                        <ChevronDown className="absolute right-0 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400 pointer-events-none" />
                       </div>
                     ) : (
-                      <span className="text-gray-900 font-medium">{caseData.gender}</span>
+                      <span className="text-gray-900 dark:text-white font-medium">{caseData.gender}</span>
                     )}
                   </div>
 
@@ -517,9 +517,9 @@ export default function CaseDetail() {
 
                 {/* Missing Alert */}
                 {(editData.status || caseData.status) === 'missing' && (
-                  <div className="inline-flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                    <span className="text-red-800 font-medium">
+                  <div className="inline-flex items-center gap-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg px-4 py-3">
+                    <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />
+                    <span className="text-red-800 dark:text-red-300 font-medium">
                       Missing for {caseData.days_missing} days
                     </span>
                   </div>
@@ -529,86 +529,86 @@ export default function CaseDetail() {
           </div>
 
           {/* Case Details */}
-          <div className="border-t border-gray-200 p-8">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column - Case Info */}
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-findthem-teal" />
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                   Case Information
                 </h2>
 
                 {/* Info Cards */}
                 <div className="space-y-4">
                   {/* Last seen date */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <Calendar className="h-5 w-5 text-findthem-teal" />
+                      <Calendar className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-800 mb-1">Last Seen Date</h3>
+                        <h3 className="font-medium text-gray-800 dark:text-white mb-1">Last Seen Date</h3>
                         {isEditing ? (
                           <input
                             type="date"
                             value={editData.last_seen_date || ''}
                             onChange={(e) => handleInputChange('last_seen_date', e.target.value)}
-                            className="p-2 border border-gray-300 rounded-lg w-full focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20"
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                           />
                         ) : (
-                          <p className="text-gray-700">{formatDate(caseData.last_seen_date)}</p>
+                          <p className="text-gray-700 dark:text-gray-300">{formatDate(caseData.last_seen_date)}</p>
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Last seen location */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <MapPin className="h-5 w-5 text-findthem-teal" />
+                      <MapPin className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-800 mb-1">Last Seen Location</h3>
+                        <h3 className="font-medium text-gray-800 dark:text-white mb-1">Last Seen Location</h3>
                         {isEditing ? (
                           <input
                             type="text"
                             value={editData.last_seen_location || ''}
                             onChange={(e) => handleInputChange('last_seen_location', e.target.value)}
-                            className="p-2 border border-gray-300 rounded-lg w-full focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20"
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             placeholder="Enter location"
                           />
                         ) : (
-                          <p className="text-gray-700">{caseData.last_seen_location}</p>
+                          <p className="text-gray-700 dark:text-gray-300">{caseData.last_seen_location}</p>
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Contact Phone */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 text-findthem-teal" />
+                      <Phone className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-800 mb-1">Contact Phone</h3>
+                        <h3 className="font-medium text-gray-800 dark:text-white mb-1">Contact Phone</h3>
                         {isEditing ? (
                           <input
                             type="tel"
                             value={editData.contact_phone || ''}
                             onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                            className="p-2 border border-gray-300 rounded-lg w-full focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20"
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                             placeholder="Phone number"
                           />
                         ) : (
-                          <p className="text-gray-700">{caseData.contact_phone || 'Not provided'}</p>
+                          <p className="text-gray-700 dark:text-gray-300">{caseData.contact_phone || 'Not provided'}</p>
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Reporter */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <User className="h-5 w-5 text-findthem-teal" />
+                      <User className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-800 mb-1">Reported By</h3>
-                        <p className="text-gray-700">{caseData.reporter || 'Anonymous'}</p>
+                        <h3 className="font-medium text-gray-800 dark:text-white mb-1">Reported By</h3>
+                        <p className="text-gray-700 dark:text-gray-300">{caseData.reporter || 'Anonymous'}</p>
                       </div>
                     </div>
                   </div>
@@ -619,20 +619,20 @@ export default function CaseDetail() {
               <div className="space-y-6">
                 {/* Description */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-findthem-teal" />
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                     Description
                   </h3>
                   {isEditing ? (
                     <textarea
                       value={editData.description || ''}
                       onChange={(e) => handleInputChange('description', e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-lg h-32 resize-none focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20"
+                      className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg h-32 resize-none focus:border-findthem-teal focus:ring-2 focus:ring-findthem-teal focus:ring-opacity-20 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       placeholder="Enter description..."
                     />
                   ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <p className="text-gray-700 leading-relaxed">
+                    <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                         {caseData.description || 'No description provided.'}
                       </p>
                     </div>
@@ -643,13 +643,13 @@ export default function CaseDetail() {
                 {caseData.updates && caseData.updates.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-findthem-teal" />
+                      <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-findthem-teal dark:text-findthem-light" />
                         Case Updates ({caseData.updates.length})
                       </h3>
                       <button
                         onClick={() => setShowUpdates(!showUpdates)}
-                        className="flex items-center gap-1 text-findthem-teal hover:text-findthem-darkGreen transition-colors"
+                        className="flex items-center gap-1 text-findthem-teal dark:text-findthem-light hover:text-findthem-darkGreen dark:hover:text-findthem-teal transition-colors"
                       >
                         {showUpdates ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         {showUpdates ? 'Hide' : 'Show'}
@@ -658,10 +658,10 @@ export default function CaseDetail() {
                     {showUpdates && (
                       <div className="space-y-3 max-h-80 overflow-y-auto">
                         {caseData.updates.map((update, index) => (
-                          <div key={index} className="bg-findthem-light border border-gray-200 rounded-lg p-4">
+                          <div key={index} className="bg-findthem-light dark:bg-findthem-teal/20 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                             <div className="flex justify-between items-start gap-4">
-                              <p className="text-gray-800 flex-1">{update.message}</p>
-                              <span className="text-findthem-teal text-sm font-medium whitespace-nowrap">
+                              <p className="text-gray-800 dark:text-white flex-1">{update.message}</p>
+                              <span className="text-findthem-teal dark:text-findthem-light text-sm font-medium whitespace-nowrap">
                                 {update.formatted_date}
                               </span>
                             </div>
@@ -676,12 +676,12 @@ export default function CaseDetail() {
 
             {/* Admin Actions */}
             {!isEditing && (
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
+              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <button
                     onClick={() => setIsOneCaseUpdateModalOpen(true)}
-                    className="flex items-center justify-center gap-2 bg-findthem-teal text-white p-3 rounded-lg hover:bg-findthem-darkGreen transition-colors"
+                    className="flex items-center justify-center gap-2 bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 p-3 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors"
                   >
                     <Plus className="h-4 w-4" />
                     <span className="font-medium">Add Update</span>
@@ -689,7 +689,7 @@ export default function CaseDetail() {
 
                   <button 
                     onClick={handleViewReports}
-                    className="flex items-center justify-center gap-2 bg-gray-600 text-white p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                    className="flex items-center justify-center gap-2 bg-gray-600 dark:bg-gray-700 text-white p-3 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
                   >
                     <FileText className="h-4 w-4" />
                     <span className="font-medium">View Reports</span>
@@ -714,7 +714,7 @@ export default function CaseDetail() {
                       },
                       true
                     )}
-                    className="flex items-center justify-center gap-2 bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transition-colors"
+                    className="flex items-center justify-center gap-2 bg-red-600 dark:bg-red-700 text-white p-3 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                     <span className="font-medium">Delete Case</span>
@@ -739,23 +739,23 @@ export default function CaseDetail() {
         {/* Simple No Reports Dialog - Same design as Reports page */}
         {dialog.isOpen && dialog.type === 'no_reports' && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border dark:border-gray-700">
               <div className="flex items-center justify-center mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-findthem-button" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-findthem-button dark:text-findthem-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                   </svg>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">
                 No Reports Found
               </h3>
-              <p className="text-gray-600 text-center mb-6">
+              <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
                 {dialog.message}
               </p>
               <button
                 onClick={closeDialog}
-                className="w-full bg-findthem-teal text-white py-2 px-4 rounded-lg hover:bg-findthem-darkGreen transition-colors"
+                className="w-full bg-findthem-teal dark:bg-findthem-light text-white dark:text-gray-900 py-2 px-4 rounded-lg hover:bg-findthem-darkGreen dark:hover:bg-findthem-teal transition-colors"
               >
                 OK
               </button>
