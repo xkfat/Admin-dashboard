@@ -242,17 +242,16 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b bg-gray-50">
+        <div className="p-6 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900">Choose Last Seen Location on Map</h3>
-              
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Choose Last Seen Location on Map</h3>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -262,14 +261,14 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
         </div>
         
         {/* Search Bar */}
-        <div className="p-4 bg-white border-b">
+        <div className="p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
             <input
               id="map-search-input"
               type="text"
               placeholder="Search places/areas/zones"
-              className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               value={searchValue}
               onChange={handleSearchChange}
               disabled={!mapLoaded}
@@ -277,7 +276,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             {searchValue && (
               <button
                 onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -288,28 +287,28 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
         </div>
         
         {/* Map Container */}
-        <div className="p-6">
+        <div className="p-6 bg-white dark:bg-gray-800">
           <div className="relative">
             {/* Loading State */}
             {!mapLoaded && !mapError && (
-              <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center z-10">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading Google Maps...</p>
+                  <p className="text-gray-600 dark:text-gray-300">Loading Google Maps...</p>
                 </div>
               </div>
             )}
             
             {/* Error State */}
             {mapError && (
-              <div className="absolute inset-0 bg-red-50 rounded-lg flex items-center justify-center z-10">
+              <div className="absolute inset-0 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center z-10">
                 <div className="text-center p-6">
-                  <div className="text-red-500 mb-4">
+                  <div className="text-red-500 dark:text-red-400 mb-4">
                     <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
                   </div>
-                  <p className="text-red-700 mb-4">{mapError}</p>
+                  <p className="text-red-700 dark:text-red-300 mb-4">{mapError}</p>
                   <button
                     onClick={() => {
                       setMapError(null);
@@ -319,7 +318,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
                         initializeMap();
                       }, 100);
                     }}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
                   >
                     Try Again
                   </button>
@@ -330,7 +329,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             {/* Map */}
             <div 
               id="google-map-container" 
-              className="w-full h-96 rounded-lg border bg-gray-100"
+              className="w-full h-96 rounded-lg border dark:border-gray-600 bg-gray-100 dark:bg-gray-700"
               style={{ minHeight: '400px' }}
             ></div>
           </div>
@@ -340,7 +339,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             <button
               onClick={handleCurrentLocation}
               disabled={!mapLoaded}
-              className="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -352,7 +351,7 @@ const MapLocationPicker = ({ isOpen, onClose, onLocationSelect, initialLocation 
             <button
               onClick={handleConfirm}
               disabled={!mapLoaded || mapError}
-              className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -415,9 +414,9 @@ const MiniMap = ({ latitude, longitude, onMapClick }) => {
     return (
       <div 
         onClick={onMapClick}
-        className="w-full h-32 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-findthem-bg transition-colors"
+        className="w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center cursor-pointer hover:border-findthem-bg dark:hover:border-findthem-light transition-colors bg-gray-50 dark:bg-gray-800"
       >
-        <div className="text-center text-gray-500">
+        <div className="text-center text-gray-500 dark:text-gray-400">
           <MapPin className="w-8 h-8 mx-auto mb-2" />
           <p className="text-sm">Click to select location on map</p>
         </div>
@@ -429,7 +428,7 @@ const MiniMap = ({ latitude, longitude, onMapClick }) => {
     <div className="relative">
       <div 
         id="mini-map" 
-        className="w-full h-32 rounded-xl border border-gray-300 cursor-pointer"
+        className="w-full h-32 rounded-xl border border-gray-300 dark:border-gray-600 cursor-pointer"
         onClick={onMapClick}
       ></div>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -601,19 +600,19 @@ export default function AddCase() {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
         {/* Header Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg mb-6 border dark:border-gray-700">
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate(-1)}
-              className="text-slate-600 hover:text-slate-800 transition-all duration-200 hover:translate-x-1 group"
+              className="text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 transition-all duration-200 hover:translate-x-1 group"
             >
               <CircleArrowLeft className="h-6 w-6 group-hover:-translate-x-1 transition-transform duration-200" />
             </button>
 
-            <h2 className="text-2xl font-bold text-gray-900 text-center flex-1">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center flex-1">
               Add Missing Person Case
             </h2>
             
@@ -623,24 +622,24 @@ export default function AddCase() {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <div className="mb-6 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded">
             {success}
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="mb-6 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm border">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* First Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 First Name *
               </label>
               <input
@@ -648,7 +647,7 @@ export default function AddCase() {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
                 disabled={loading}
               />
@@ -656,7 +655,7 @@ export default function AddCase() {
 
             {/* Last Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Last Name *
               </label>
               <input
@@ -664,7 +663,7 @@ export default function AddCase() {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
                 disabled={loading}
               />
@@ -672,7 +671,7 @@ export default function AddCase() {
 
             {/* Age */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Age *
               </label>
               <input
@@ -682,7 +681,7 @@ export default function AddCase() {
                 onChange={handleInputChange}
                 min="0"
                 max="150"
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
                 disabled={loading}
               />
@@ -690,14 +689,14 @@ export default function AddCase() {
 
             {/* Gender */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Gender *
               </label>
               <select
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
                 disabled={loading}
               >
@@ -709,7 +708,7 @@ export default function AddCase() {
 
             {/* Last Seen Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Last Seen Date *
               </label>
               <input
@@ -718,7 +717,7 @@ export default function AddCase() {
                 value={formData.last_seen_date}
                 onChange={handleInputChange}
                 max={today}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
                 disabled={loading}
               />
@@ -726,7 +725,7 @@ export default function AddCase() {
 
             {/* Last Seen Location */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Last Seen Location *
               </label>
               <input
@@ -734,7 +733,7 @@ export default function AddCase() {
                 name="last_seen_location"
                 value={formData.last_seen_location}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="e.g., Nouakchott-Nord"
                 required
                 disabled={loading}
@@ -743,7 +742,7 @@ export default function AddCase() {
 
             {/* Map Location Selector */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Select Last Seen Location from Map
               </label>
               <MiniMap 
@@ -755,7 +754,7 @@ export default function AddCase() {
 
             {/* Photo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Photo *
               </label>
               <div className="flex items-center space-x-4">
@@ -772,14 +771,14 @@ export default function AddCase() {
                   />
                   <label
                     htmlFor="photo-upload"
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer flex items-center justify-center bg-gray-50 hover:bg-gray-100"
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-pointer flex items-center justify-center bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
                   >
-                    <svg className="w-6 h-6 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 mr-2 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
                     {formData.photo ? 'Change Photo' : 'Choose Photo'}
                   </label>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {formData.photo ? formData.photo.name : 'No photo chosen'}
                   </p>
                 </div>
@@ -788,7 +787,7 @@ export default function AddCase() {
                     <img
                       src={photoPreview}
                       alt="Preview"
-                      className="w-24 h-24 object-cover rounded-lg border"
+                      className="w-24 h-24 object-cover rounded-lg border dark:border-gray-600"
                     />
                   </div>
                 )}
@@ -797,7 +796,7 @@ export default function AddCase() {
 
             {/* Contact Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Contact Phone Number
               </label>
               <input
@@ -805,7 +804,7 @@ export default function AddCase() {
                 name="contact_phone"
                 value={formData.contact_phone}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="e.g., +222 12345678"
                 disabled={loading}
               />
@@ -813,7 +812,7 @@ export default function AddCase() {
 
             {/* Description */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description
               </label>
               <textarea
@@ -821,7 +820,7 @@ export default function AddCase() {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="4"
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Additional details about the missing person (clothing, distinctive features, circumstances, etc.)"
                 disabled={loading}
               />
@@ -829,14 +828,14 @@ export default function AddCase() {
 
             {/* Submission Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Submission Status
               </label>
               <select
                 name="submission_status"
                 value={formData.submission_status}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 disabled={loading}
               >
                 <option value="active">Active</option>
@@ -848,14 +847,14 @@ export default function AddCase() {
 
             {/* Case Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Case Status
               </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 disabled={loading}
               >
                 <option value="missing">Missing</option>
@@ -871,14 +870,14 @@ export default function AddCase() {
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors"
                   disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-findthem-bg text-white px-6 py-3 rounded-lg hover:bg-findthem-button transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-findthem-bg hover:bg-findthem-button dark:bg-findthem-bg dark:hover:bg-findthem-teal text-white dark:text-white px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? 'Submitting...' : 'Submit Case'}

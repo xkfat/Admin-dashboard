@@ -9,7 +9,8 @@ const Dashboard = ({ onLogout }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     return (
-        <div className="h-screen">
+        <div className="h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+            {/* Fixed Navbar */}
             <div className="fixed top-0 left-0 w-full z-50">
                 <Navbar 
                     onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} 
@@ -23,11 +24,11 @@ const Dashboard = ({ onLogout }) => {
                     <Sidebar isSidebarOpen={isSidebarOpen} />
                 </div>
 
-                {/* Main content area - Updated to match new sidebar widths */}
+                {/* Main content area - Updated to match new sidebar widths with dark theme */}
                 <div
                     className={`${
                         isSidebarOpen ? 'ml-64' : 'ml-20'
-                    } p-6 transition-all duration-300 w-full overflow-y-auto bg-gray-50`}
+                    } p-6 transition-all duration-300 w-full overflow-y-auto bg-gray-50 dark:bg-gray-900`}
                 >
                     <div className={`max-w-none transition-all duration-300 ${
                         isSidebarOpen ? 'px-4' : 'px-2'

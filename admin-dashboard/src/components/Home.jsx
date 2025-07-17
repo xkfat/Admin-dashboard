@@ -170,81 +170,42 @@ export default function Home() {
     }
   };
 
-  const fetchRecentActivity = async () => {
-    try {
-      setActivityLoading(true);
-      
-      // Try to use dashboard activity endpoint if available
-      try {
-        const response = await API.dashboard.fetchRecentActivity();
-        
-        if (response.activities && response.activities.length > 0) {
-          setRecentActivity(response.activities);
-        } else {
-          setFallbackActivity();
-        }
-      } catch (error) {
-        // If dashboard API is not available, set fallback activity
-        setFallbackActivity();
-      }
-      
-    } catch (error) {
-      console.error('Error fetching recent activity:', error);
-      setFallbackActivity();
-    } finally {
-      setActivityLoading(false);
+const fetchRecentActivity = async () => {
+  try {
+    setActivityLoading(true);
+    console.log('🔄 Fetching recent activity from backend...');
+    
+    const response = await API.dashboard.fetchRecentActivity();
+    console.log('✅ Backend response received:', response);
+    
+    if (response && response.activities && response.activities.length > 0) {
+      console.log('📊 Setting real activities:', response.activities);
+      setRecentActivity(response.activities);
+    } else {
+      console.log('📭 No activities found - showing empty state');
+      setRecentActivity([]);
     }
-  };
-
-  const setFallbackActivity = () => {
-    setRecentActivity([
-      {
-        id: 'case-update-1',
-        type: 'case_update',
-        title: 'Case update sent to John Doe case',
-        subtitle: 'Update message delivered to reporter',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        icon: 'document',
-        color: 'blue'
-      },
-      {
-        id: 'new-case-1',
-        type: 'case',
-        title: 'New missing person case submitted',
-        subtitle: 'Jane Smith case requires review',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        icon: 'user',
-        color: 'green'
-      },
-      {
-        id: 'ai-match-1',
-        type: 'ai_match',
-        title: 'AI found potential match (High confidence)',
-        subtitle: 'Match requires admin review',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-        icon: 'ai',
-        color: 'purple'
-      },
-      {
-        id: 'case-update-2',
-        type: 'case_update',
-        title: 'Case status updated to found',
-        subtitle: 'Mike Johnson case resolved successfully',
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-        icon: 'check',
-        color: 'purple'
-      },
-      {
-        id: 'report-1',
-        type: 'report',
-        title: 'New report submitted',
-        subtitle: 'Sighting reported for Sarah Wilson case',
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-        icon: 'document',
-        color: 'orange'
-      }
-    ]);
-  };
+    
+  } catch (error) {
+    console.error('❌ Dashboard API failed:', error);
+    
+    // Log detailed error information
+    if (error.message?.includes('403')) {
+      console.error('🔐 Permission denied - user is not admin');
+    } else if (error.message?.includes('401')) {
+      console.error('🔐 Authentication failed - user not logged in');
+    } else if (error.message?.includes('404')) {
+      console.error('🔍 Endpoint not found - check backend URL');
+    } else {
+      console.error('💥 Other error:', error.message);
+    }
+    
+    // IMPORTANT: Set empty array instead of fallback data
+    setRecentActivity([]);
+  } finally {
+    setActivityLoading(false);
+  }
+};
 
   // Helper function to get activity icons
   const getActivityIcon = (iconType) => {
@@ -270,15 +231,15 @@ export default function Home() {
 
   const getColorClasses = (color) => {
     const colorMap = {
-      blue: 'bg-blue-500',
-      green: 'bg-green-500',
-      yellow: 'bg-yellow-500',
-      orange: 'bg-orange-500',
-      red: 'bg-red-500',
-      purple: 'bg-purple-500',
-      gray: 'bg-gray-500'
+      blue: 'bg-blue-500 dark:bg-blue-600',
+      green: 'bg-green-500 dark:bg-green-600',
+      yellow: 'bg-yellow-500 dark:bg-yellow-600',
+      orange: 'bg-orange-500 dark:bg-orange-600',
+      red: 'bg-red-500 dark:bg-red-600',
+      purple: 'bg-purple-500 dark:bg-purple-600',
+      gray: 'bg-gray-500 dark:bg-gray-600'
     };
-    return colorMap[color] || 'bg-gray-500';
+    return colorMap[color] || 'bg-gray-500 dark:bg-gray-600';
   };
 
   const formatRelativeTime = (timestamp) => {
@@ -354,45 +315,44 @@ export default function Home() {
   return (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h1 className="text-2xl font-bold text-gray-900">Hey admin, welcome back</h1>
-        <p className="text-gray-600 mt-1">Here's what's happening with FindThem today</p>
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hey admin, welcome back</h1>
+        <p className="text-gray-600 dark:text-gray-300 mt-1">Here's what's happening with FindThem today</p>
       </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Active Cases */}
         <div 
-          className="bg-red-50 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md"
+          className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md border dark:border-red-700/20"
           onClick={() => handleNavigateToCases('active')}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Cases</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Cases</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
                 {loading ? '...' : stats.activeCases}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Submission status: Active</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Submission status: Active</p>
             </div>
-          
-<Users className="h-8 w-8 text-gray-400" />
+            <Users className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
         
         {/* Unverified Reports */}
         <div 
-          className="bg-yellow-50 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md"
+          className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md border dark:border-yellow-700/20"
           onClick={() => handleNavigateToReports('unverified')}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Unverified Reports</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Unverified Reports</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
                 {loading ? '...' : stats.unverifiedReports}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Awaiting review</p>
             </div>
-            <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
           </div>
@@ -400,18 +360,18 @@ export default function Home() {
         
         {/* Pending Cases (In Progress) */}
         <div 
-          className="bg-orange-50 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md"
+          className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md border dark:border-orange-700/20"
           onClick={() => handleNavigateToCases('pending')}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Pending Cases</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Cases</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
                 {loading ? '...' : stats.pendingCases}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Awaiting review</p>
             </div>
-            <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
@@ -419,91 +379,89 @@ export default function Home() {
         
         {/* AI Matches - Show pending AI matches instead of perfect matches */}
         <div 
-          className="bg-purple-50 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md"
+          className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg shadow-sm cursor-pointer hover:scale-105 transition-all hover:shadow-md border dark:border-purple-700/20"
           onClick={handleNavigateToAIMatches}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">AI Matches</p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">AI Matches</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
                 {loading ? '...' : stats.aiMatches}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {stats.aiPendingReviews > 0 ? 'Awaiting review' : 'No pending matches'}
               </p>
             </div>
-          <Bot className="h-8 w-8 text-gray-400" />
-
+            <Bot className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
       </div>
 
-  
-{/* Action Cards */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  {/* Add New Case */}
-  <div 
-    className="bg-gradient-to-br from-teal-500 to-teal-700 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
-    onClick={handleNavigateToAddCase}
-  >
-    <div className="flex items-center justify-between mb-4">
-      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-        </svg>
+      {/* Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Add New Case */}
+        <div 
+          className="bg-gradient-to-br from-teal-500 to-teal-700 dark:from-teal-600 dark:to-teal-800 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+          onClick={handleNavigateToAddCase}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+            </div>
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Add New Case</h3>
+          <p className="text-teal-100 dark:text-teal-200">Submit a new missing person case</p>
+        </div>
+        
+        {/* Add Case Update */}
+        <div 
+          className="bg-gradient-to-br from-cyan-500 to-cyan-700 dark:from-cyan-600 dark:to-cyan-800 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+          onClick={handleAddCaseUpdate}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </div>
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Add Case Update</h3>
+          <p className="text-cyan-100 dark:text-cyan-200">Send updates to case reporters</p>
+        </div>
+        
+        {/* Send Alert */}
+        <div 
+          className="bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
+          onClick={handleSendAlert}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <BellRing className="h-5 w-5" />
+            </div>
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold mb-2">Send Alert</h3>
+          <p className="text-emerald-100 dark:text-emerald-200">Broadcast notifications to users</p>
+        </div>
       </div>
-      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-    </div>
-    <h3 className="text-xl font-bold mb-2">Add New Case</h3>
-    <p className="text-teal-100">Submit a new missing person case</p>
-  </div>
-  
-  {/* Add Case Update */}
-  <div 
-    className="bg-gradient-to-br from-cyan-500 to-cyan-700 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
-    onClick={handleAddCaseUpdate}
-  >
-    <div className="flex items-center justify-between mb-4">
-      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-        </svg>
-      </div>
-      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-    </div>
-    <h3 className="text-xl font-bold mb-2">Add Case Update</h3>
-    <p className="text-cyan-100">Send updates to case reporters</p>
-  </div>
-  
-  {/* Send Alert */}
-  <div 
-    className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-6 rounded-lg cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-lg"
-    onClick={handleSendAlert}
-  >
-    <div className="flex items-center justify-between mb-4">
-      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-        <BellRing className="h-5 w-5" />
-      </div>
-      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-    </div>
-    <h3 className="text-xl font-bold mb-2">Send Alert</h3>
-    <p className="text-emerald-100">Broadcast notifications to users</p>
-  </div>
-</div>
 
       {/* Recent Activity - Enhanced with Real Data */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Recent Activity</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
           <button 
             onClick={fetchRecentActivity}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium flex items-center"
             disabled={activityLoading}
           >
             <svg className={`h-4 w-4 mr-1 ${activityLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,10 +475,10 @@ export default function Home() {
           <div className="space-y-3">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="flex items-start space-x-3 animate-pulse">
-                <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full mt-2"></div>
                 <div className="flex-1">
-                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-1"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
@@ -528,21 +486,20 @@ export default function Home() {
         ) : recentActivity.length > 0 ? (
           <div className="space-y-3">
             {recentActivity.map(activity => (
-              <div key={activity.id} className="flex items-start space-x-3 hover:bg-gray-50 p-2 rounded-lg transition-colors">
+              <div key={activity.id} className="flex items-start space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
                 <div className={`w-2 h-2 ${getColorClasses(activity.color)} rounded-full mt-2 flex-shrink-0`}></div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{activity.title}</p>
-                  <p className="text-xs text-gray-500">{formatRelativeTime(activity.timestamp)} • {activity.subtitle}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{activity.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatRelativeTime(activity.timestamp)} • {activity.subtitle}</p>
                 </div>
                 <div className="flex-shrink-0">
-                
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <svg className="h-12 w-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <svg className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <p>No recent activity available</p>

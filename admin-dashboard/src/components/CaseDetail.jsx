@@ -23,6 +23,17 @@ export default function CaseDetail() {
   const [isOneCaseUpdateModalOpen, setIsOneCaseUpdateModalOpen] = useState(false);
   const [showUpdates, setShowUpdates] = useState(true);
 
+  // Smart back navigation handler
+  const handleBackNavigation = () => {
+    // Check if there's a previous page in history
+    if (window.history.length > 1) {
+      navigate(-1); // Go back to previous page
+    } else {
+      // Fallback to cases page if no history
+      navigate('/cases');
+    }
+  };
+
   const handleUpdateAdded = () => {
     fetchCaseData();
     showDialog(
@@ -317,11 +328,11 @@ export default function CaseDetail() {
         {/* Header Section */}
         <div className="flex items-center justify-between bg-white rounded-lg p-6 shadow-sm border">
           <button
-            onClick={() => navigate('/cases')}
+            onClick={handleBackNavigation}
             className="flex items-center gap-2 text-gray-600 hover:text-findthem-teal transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Back to Cases</span>
+            <span className="font-medium">Back</span>
           </button>
           
           <div className="flex items-center gap-3">

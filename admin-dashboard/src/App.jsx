@@ -10,13 +10,8 @@ import AddCase from './components/AddCase';
 import Notification from './components/Notifications';
 import CaseDetail from './components/CaseDetail';
 import Map from './components/Map';
-
 import AIMatches from './components/AIMatches';
-
-
-
-
-
+import { ThemeProvider } from './Theme';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -49,42 +44,41 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-teal-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="App">
-      <Router>
-        {!isLoggedIn ? (
-          <Login onLoginSuccess={handleLoginSuccess} />
-        ) : (
-          <Routes>
-            <Route path="/" element={<Dashboard onLogout={handleLogout} />}>
-              <Route index element={<Home />} />
-              <Route path='home' element={<Home />} />
-              <Route path='cases' element={<Cases />} />
-          <Route path='/cases/:id' element={<CaseDetail/>}/>
-
-              <Route path='reports' element={<Reports />} />
-              <Route path='/add-case' element={<AddCase />} />
-              <Route path='/notifications' element={<Notification />} />
-              <Route path='/AIMatches' element={<AIMatches />} />
-              <Route path='/map' element={<Map />} />
+    <ThemeProvider>
+      <div className="App min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
+        <Router>
+          {!isLoggedIn ? (
+            <Login onLoginSuccess={handleLoginSuccess} />
+          ) : (
+            <Routes>
+              <Route path="/" element={<Dashboard onLogout={handleLogout} />}>
+                <Route index element={<Home />} />
+                <Route path='home' element={<Home />} />
+                <Route path='cases' element={<Cases />} />
+                <Route path='/cases/:id' element={<CaseDetail/>}/>
+                <Route path='reports' element={<Reports />} />
+                <Route path='/add-case' element={<AddCase />} />
+                <Route path='/notifications' element={<Notification />} />
+                <Route path='/AIMatches' element={<AIMatches />} />
+                <Route path='/map' element={<Map />} />
                 <Route path='/Notification' element={<Notification />} />
-
-            </Route>
-          </Routes>
-        )}
-      </Router>
-    </div>
+              </Route>
+            </Routes>
+          )}
+        </Router>
+      </div>
+    </ThemeProvider>
   );
 }
 
 export default App;
-
